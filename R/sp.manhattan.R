@@ -1,0 +1,50 @@
+sp.manhattan <- function(sp.df,
+                         threshold,
+                         save.path,
+                         plot.ylim = NULL,
+                         plot.name = "",
+                         plot.type = c("pdf", "jpg"),
+                         dpi = 300){
+
+
+    PLOT.NAME <- paste0(save.path,"/[3]CircularManhattanPlot_",plot.name)
+        if (plot.type == "jpg")
+            jpeg(paste(PLOT.NAME, ".jpg", sep = ""),
+                 width = 5.5 * 2 * dpi, height = 5.5 * 2 * dpi,
+                 res = dpi, quality = 100)
+        if (plot.type == "pdf")
+            pdf(paste(PLOT.NAME, ".pdf", sep = ""),
+                width = 5.5 * 2, height = 5.5 * 2)
+        if (plot.type == "tiff")
+            tiff(paste(PLOT.NAME, ".tiff",
+                       sep = ""), width = 5.5 * 2 * dpi, height = 5.5 * 2 *
+                     dpi, res = dpi)
+
+    sp.df %>%
+        CMplot(plot.type="c",
+               col=matrix(c("orange", "grey30",
+                            "darkblue", "green",
+                            "darkgreen", "darkmagenta",
+                            "gold", "black"), nrow=4, byrow=T)[1:(ncol(.)-3),],
+               chr.labels=paste("Chr",c(1:20),sep=""),
+               r=0.4,
+               outward=FALSE,
+               cir.chr.h=0.5,
+               cir.legend=TRUE,
+               cir.legend.cex=0.5,
+               cir.legend.col="black",
+               threshold = threshold[nrow(threshold), ],
+               threshold.col = 1:ncol(threshold),
+               threshold.lwd = 2,
+               ylim=plot.ylim,
+               LOG10 = FALSE,
+               amplify = TRUE,
+               signal.col = "red",
+               signal.cex=1.5,
+               chr.den.col="black",
+               file.output=FALSE,
+               file="jpg", dpi=dpi)
+    dev.off()
+
+}
+
