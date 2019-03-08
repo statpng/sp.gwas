@@ -15,7 +15,10 @@
 /*.Rcheck/
 
 # RStudio files
-.Rproj/
+*.Rproj
+
+# Output files of results
+gitignore/
 
 # produced vignettes
 vignettes/*.html
