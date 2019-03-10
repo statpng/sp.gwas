@@ -48,8 +48,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     missing.snp <- apply( myX.init[-1,-(1:11)], 1, function(X) sum(is.na(X)) )
     missing.sample <- apply( myX.init[-1,-(1:11)], 2, function(X) sum(is.na(X)) )
 
-    write_xlsx(x=data.frame(ID=myX.init[-1,1], missing.snp, stringsAsFactors = FALSE), path="./[0]missing.snp.xlsx")
-    write_xlsx(x=data.frame(ID=as.character(myX.init[1,-(1:11)]), missing.sample, stringsAsFactors = FALSE), path="./[0]missing.sample.xlsx")
+    write_xlsx(x=data.frame(ID=myX.init[-1,1], missing.snp, stringsAsFactors = FALSE), path=paste0(save.path,"/[0]missing.snp.xlsx"))
+    write_xlsx(x=data.frame(ID=as.character(myX.init[1,-(1:11)]), missing.sample, stringsAsFactors = FALSE), path=paste0(save.path,"/[0]missing.sample.xlsx"))
 
     # Saving Excel But its time is too long ----------------------------------
     # for( Excelobj in list(myX, myGD, myGM, myGT) ){
@@ -64,6 +64,12 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     # Matching of X and Y -------------------------------------------------------
     taxa.snp <- as.character( myX.init[1,12:ncol(myX.init), drop=TRUE] )
     taxa.phenotype <- myY.init[, 1]
+    
+    print("IDs for genotype data are ")
+    print(head(taxa.snp))
+    
+    print("IDs for phenotype data are ")
+    print(head(taxa.phenotype))
 
     ss.x <- which(taxa.snp %in% intersect( taxa.snp, taxa.phenotype ) )
     ss.y <- which(taxa.phenotype %in% intersect( taxa.snp, taxa.phenotype ) )
@@ -107,7 +113,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
         ggplot(aes(value)) +
         geom_histogram(fill="white", colour="black") +
-        xlab("Phenotypes") +
+        xlab("Original Phenotypes") +
         ggtitle(paste0("Histogram of original phenotypes")) +
         theme_bw() +
         facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
@@ -132,12 +138,13 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     ggsave(Hist.norm, filename = paste0(save.path,"/[1]Hist.phenotype.norm.pdf"), width = 10, height = 5)
 
 
-    write_xlsx(x=myX, path=paste0(save.path,"/[1]myX.xlsx"))
-    write_xlsx(x=myY, path=paste0(save.path,"/[1]myY.xlsx"))
-    write_xlsx(x=myY.t, path=paste0(save.path,"/[1]myY.t.xlsx"))
-    write_xlsx(x=data.frame(ID=rownames(myGD), myGD, stringsAsFactors = FALSE), path=paste0(save.path,"/[1]myGD.xlsx"))
-    write_xlsx(x=myGM, path=paste0(save.path,"/[1]myGM.xlsx"))
-    write_xlsx(x=myGT, path=paste0(save.path,"/[1]myGT.xlsx"))
+    write.csv(x=myX, file=paste0(save.path,"/[1]myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=myY, file=paste0(save.path,"/[1]myY.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=myY.t, file=paste0(save.path,"/[1]myY.t.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=data.frame(ID=rownames(myGD), myGD, stringsAsFactors = FALSE), file=paste0(save.path,"/[1]myGD.xlsx"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=myGM, file=paste0(save.path,"/[1]myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=myGT, file=paste0(save.path,"/[1]myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    
 
     myDATA <- list(myX=myX, myY=myY, myY.t=myY.t, myGD=myGD, myGM=myGM, myGT=myGT)
     save( myDATA, file=paste0(save.path,"/[1]Data",".RData"))
