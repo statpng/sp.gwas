@@ -12,6 +12,7 @@
 #' @importFrom compiler cmpfun
 #' @importFrom bestNormalize boxcox
 #' @importFrom writexl write_xlsx
+#' @importFrom readxl read_xlsx
 #' @importFrom data.table fread
 #' @importFrom dplyr "%>%"
 #' @importFrom dplyr select

@@ -37,8 +37,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
 
     myX.init <- myX.init[,c(1:11, order( myX.init[1, 12:ncol(myX.init) ] )+11)]
     myY.init <- myY.init[order( myY.init[, 1] ), ]
+    
     print("Performing the numericalization procedure for genotpe data.")
-
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
     myGM.init <- myX.init[,1:4]
     myGT.init <- myX.init[,c(12:ncol(myX.init))]
@@ -67,6 +67,13 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
 
     ss.x <- which(taxa.snp %in% intersect( taxa.snp, taxa.phenotype ) )
     ss.y <- which(taxa.phenotype %in% intersect( taxa.snp, taxa.phenotype ) )
+    
+    if( length(ss.x) < length(taxa.snp)/2 ) warning("More half of samples does not match")
+    if( length(ss.y) < length(taxa.phenotype)/2 ) warning("More half of samples does not match")
+    
+    if( length(ss.x) < 10 ) stop("Check your sample IDs")
+    if( length(ss.y) < 10 ) stop("Check your sample IDs")
+    
 
     if(identical(as.character(myX.init[1,ss.x+11]), as.character(myY.init[ss.y, 1]) )){
         myX <- as.data.frame( myX.init[,c(1:11,ss.x+11)], stringsAsFactors=FALSE )
@@ -95,9 +102,9 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     }
 
     Hist.y <- myY %>%
-        select(-1) %>%
+        .[,-1] %>%
         gather(PHENOTYPE) %>%
-        data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/4)) %>%
+        data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
         ggplot(aes(value)) +
         geom_histogram(fill="white", colour="black") +
         xlab("Phenotypes") +
@@ -108,9 +115,9 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
                    vjust = "inward", hjust = "inward")
 
     Hist.y.t <- myY.t %>%
-        select(-1) %>%
+        .[,-1] %>%
         gather(PHENOTYPE) %>%
-        data.frame(., pvalue=rep(norm.pvalue.t, each=nrow(.)/4)) %>%
+        data.frame(., pvalue=rep(norm.pvalue.t, each=nrow(.)/length(norm.pvalue))) %>%
         ggplot(aes(value)) +
         geom_histogram(fill="white", colour="black") +
         xlab("Transformed phenotypes") +
