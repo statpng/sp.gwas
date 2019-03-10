@@ -31,23 +31,22 @@
 
 #' @author Kipoong Kim <kkp7700@gmail.com>
 
-#' @seealso
 #' @examples
 #' # Not run
 #' # sp.gwas(genotype.path = "./input.snp.csv",
 #' #         phenotype.path = "./input.phenotype.csv",
+#' #         save.path = "./Test",
 #' #         y.col=5:8,
 #' #         y.id.col=2,
 #' #         method="lasso",
 #' #         family="gaussian",
 #' #         Falsediscovery = c(1,5,10),
 #' #         plot.ylim = NULL,
-#' #         save.path = "Test2",
 #' #         lambda.min.quantile = 0.5,
 #' #         n.lambda = 10,
 #' #         K = 100,
 #' #         psub = 0.5,
-#' #         plot.name = "Test2",
+#' #         plot.name = "Test",
 #' #         plot.type = "jpg",
 #' #         plot.dpi = 300)
 #' @export sp.gwas

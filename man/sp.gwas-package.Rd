@@ -13,25 +13,6 @@ sp.gwas
 \details{
 The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
 }
-\examples{
-# Not run
-# sp.gwas(genotype.path = "./input.snp.csv",
-#         phenotype.path = "./input.phenotype.csv",
-#         y.col=5:8,
-#         y.id.col=2,
-#         method="lasso",
-#         family="gaussian",
-#         Falsediscovery = c(1,5,10),
-#         plot.ylim = NULL,
-#         save.path = "./Test2",
-#         lambda.min.quantile = 0.5,
-#         n.lambda = 10,
-#         K = 100,
-#         psub = 0.5,
-#         plot.name = "Test2",
-#         plot.type = "jpg",
-#         plot.dpi = 300)
-}
 \references{
 Zou, H., & Hastie, T. (2005). Regularization and variable selection via the elastic net. Journal of the royal statistical society: series B (statistical methodology), 67(2), 301-320.
 }

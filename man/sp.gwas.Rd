@@ -45,7 +45,8 @@ sp.gwas(genotype.path = NULL, phenotype.path = NULL,
 \item{plot.dpi}{A resolution of plot. If you want to get a high-resolution image, plot.dpi should be large.}
 }
 \value{
-\item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.t.}
+\item{Histogram of original and transformed phenotypes}{Histogram of phenotypes with p-value by Shapiro-test on the top right corner.}
+    \item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.t.}
     \item{sp.res}{A list of sp.df and threshold.}
     \item{Circular Manhattan plot}{Manhattan plot for the first phenotype is the innermost circle. Colors for chromosome is fixed, so that if you want to change colors, you would edit the R code of sp.manhattan function.}
 }
@@ -55,13 +56,13 @@ Input data is the hapmap formatted SNP data and phenotype data corresponding to 
 Output includes files of three types: (1) Matched data files (genotype, numerical, snp info, and phenotype), (2) Results file (selection probabilities and thresholds), (3) Circular manhattan plot with (blue dotted) significant line corresponding to the largest value among user-defined false discoveries.
 }
 \details{
-The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}.
+The penalty function of \code{pclogit} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
 }
 \examples{
 # Not run
 # sp.gwas(genotype.path = "./input.snp.csv",
 #         phenotype.path = "./input.phenotype.csv",
-#         save.path = "Test2",
+#         save.path = "./Test",
 #         y.col=5:8,
 #         y.id.col=2,
 #         method="lasso",
@@ -72,7 +73,7 @@ The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1
 #         n.lambda = 10,
 #         K = 100,
 #         psub = 0.5,
-#         plot.name = "Test2",
+#         plot.name = "Test",
 #         plot.type = "jpg",
 #         plot.dpi = 300)
 }

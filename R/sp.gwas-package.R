@@ -21,22 +21,5 @@
 
 #' @keywords hapmap gwas regularization "selection probabilities"
 
-#' @examples
-#' # Not run
-#' # sp.gwas(genotype.path = "./input.snp.csv",
-#' #         phenotype.path = "./input.phenotype.csv",
-#' #         y.col=5:8,
-#' #         y.id.col=2,
-#' #         method="lasso",
-#' #         family="gaussian",
-#' #         Falsediscovery = c(1,5,10),
-#' #         plot.ylim = NULL,
-#' #         save.path = "./Test2",
-#' #         lambda.min.quantile = 0.5,
-#' #         n.lambda = 10,
-#' #         K = 100,
-#' #         psub = 0.5,
-#' #         plot.name = "Test2",
-#' #         plot.type = "jpg",
-#' #         plot.dpi = 300)
+
 NULL
