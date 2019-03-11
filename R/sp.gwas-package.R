@@ -7,12 +7,12 @@
 #' @return A list of data files(genotype, phenotype, etc.), results for selection probabilities, and manhattan plot for multiple traits.
 
 #' @import glmnet CMplot stats ggplot2 utils tidyr dplyr
-#' @importFrom gridExtra grid.arrange
-#' @importFrom compiler cmpfun
-#' @importFrom bestNormalize boxcox
-#' @importFrom writexl write_xlsx
-#' @importFrom readxl read_xlsx
-#' @importFrom data.table fread
+#' @import gridExtra grid.arrange
+#' @import compiler cmpfun
+#' @import bestNormalize boxcox
+#' @import writexl write_xlsx
+#' @import readxl read_xlsx
+#' @import data.table fread
 
 #' @references Zou, H., & Hastie, T. (2005). Regularization and variable selection via the elastic net. Journal of the royal statistical society: series B (statistical methodology), 67(2), 301-320.
 
