@@ -1,4 +1,4 @@
-import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.col=NULL, y.id.col=2){
+import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.col=NULL, y.id.col=2, family="gaussian"){
 
 
     # Data Transformation -----------------------------------------------------
@@ -93,7 +93,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
 
     # myX[ss.x+11,][1:10,1:10]
     # myY[ss.y,][1:10,]
-
+    if( family=="gaussian" ){
     print("Performing the normalization for phenotypes, but there is no evidence that they can be normalized.")
 
     myY.t <- myY
@@ -137,16 +137,24 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
 
     ggsave(Hist.norm, filename = paste0(save.path,"/[1]Hist.phenotype.norm.pdf"), width = 10, height = 5)
 
-
+    }
+    
     write.csv(x=myX, file=paste0(save.path,"/[1]myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    if(family=="gaussian"){
+      write.csv(x=myY.original, file=paste0(save.path,"/[1]myY.original.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    }
     write.csv(x=myY, file=paste0(save.path,"/[1]myY.csv"), row.names=FALSE, fileEncoding = "UTF-8")
-    write.csv(x=myY.t, file=paste0(save.path,"/[1]myY.t.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=data.frame(ID=rownames(myGD), myGD, stringsAsFactors = FALSE), file=paste0(save.path,"/[1]myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGM, file=paste0(save.path,"/[1]myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGT, file=paste0(save.path,"/[1]myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
-
-    myDATA <- list(myX=myX, myY=myY, myY.t=myY.t, myGD=myGD, myGM=myGM, myGT=myGT)
+    if(family=="gaussian"){
+      myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
+    } else {
+      myDATA <- list(myX=myX, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
+    }
+    
+    
     save( myDATA, file=paste0(save.path,"/[1]Data",".RData"))
 
     # End ---------------------------------------------------------------------

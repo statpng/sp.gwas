@@ -79,7 +79,8 @@ sp.gwas <- function( genotype.path = NULL,
                                 phenotype.path=phenotype.path,
                                 save.path=save.path,
                                 y.col=y.col,
-                                y.id.col=y.id.col)
+                                y.id.col=y.id.col,
+                                family=family)
     } else {
         print("The data file already exists.")
         load(paste0(save.path,"/[1]Data",".RData"))
@@ -89,7 +90,7 @@ sp.gwas <- function( genotype.path = NULL,
 
     if( !file.exists( paste0(save.path,"/[2]sp.res", ".RData") ) ){
         sp.res <- selection.prob(x=myDATA$myGD,
-                                 y=myDATA$myY.t,
+                                 y=myDATA$myY,
                                  save.path=save.path,
                                  snp.info=myDATA$myGM,
                                  method=method,
