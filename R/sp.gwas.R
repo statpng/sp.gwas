@@ -70,7 +70,8 @@ sp.gwas <- function( genotype.path = NULL,
 
 
     if( !file.exists( paste0(save.path) ) ){
-        system(paste0("mkdir ", save.path))
+        # system(paste0("mkdir ", save.path))
+        dir.create(paste0(save.path))
     }
 
     if( !file.exists( paste0(save.path,"/[1]Data",".RData") ) ){
