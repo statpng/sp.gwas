@@ -108,8 +108,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     }
 
     Hist.y <- myY %>%
-        .[,-1,drop=FALSE] %>%
-        as.data.frame() %>% 
+        .[,-1,drop=F] %>%
         gather(PHENOTYPE) %>%
         data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
         ggplot(aes(value)) +
