@@ -1,20 +1,25 @@
 import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.col=NULL, y.id.col=2, family="gaussian"){
 
-
-    # Data Transformation -----------------------------------------------------
-
-    if(is.null(genotype.path)) {
-        print("Select genotype data with hapmap format.")
-        genotype.path <- choose.files()
-    }
-
-    if( grepl("*.xlsx", genotype.path) ){
-        myX.init <- read_excel(genotype.path, col_names=FALSE)
-    } else if( grepl("*.csv|*.txt", genotype.path) ){
+    if( length( dim(genotype.path) ) > 0 ){
+      myX.init <- genotype.path
+    } else {
+      if(is.null(genotype.path)) {
+          print("Select genotype data with hapmap format.")
+          genotype.path <- choose.files()
+      }
+  
+      if( grepl("*.xlsx", genotype.path) ){
+          myX.init <- read_excel(genotype.path, col_names=FALSE)
+      } else if( grepl("*.csv|*.txt", genotype.path) ){
+          myX.init <- as.data.frame( fread(genotype.path, header=FALSE), stringsAsFactors=FALSE )
+      } else {
         myX.init <- as.data.frame( fread(genotype.path, header=FALSE), stringsAsFactors=FALSE )
+      } 
     }
 
-
+  if( length( dim(phenotype.path) ) > 0 ){
+    myY.init <- phenotype.path
+  } else {
     if(is.null(phenotype.path)) {
         print("Select the path of phenotype data which has sample IDs in its first column.")
         phenotype.path <- choose.files()
@@ -24,8 +29,10 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         myY.init <- read_excel(phenotype.path)
     } else if( grepl("*.csv|*.txt", phenotype.path) ){
         myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
+    } else {
+      myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
     }
-
+  }
 
     if( ncol(myY.init) > 5 & is.null(y.col) ){
         stop("There are too many phenotypes. Choose 4 or less.")
@@ -38,6 +45,49 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     myX.init <- myX.init[,c(1:11, order( myX.init[1, 12:ncol(myX.init) ] )+11)]
     myY.init <- myY.init[order( myY.init[, 1] ), ]
     
+    print(paste0("Removing the missing values of phenotypes(",
+                 sum(apply(myY.init, 1, function(x) any(is.na(x)))),
+                 ")."
+                 ))
+    
+    myY.init <- myY.init[!apply(myY.init, 1, function(x) any(is.na(x))), ]
+    
+    
+    
+    # Matching of X and Y -------------------------------------------------------
+    print("Matcing procedure between genotpe and phenotype")
+    taxa.snp <- as.character( myX.init[1,12:ncol(myX.init), drop=TRUE] )
+    taxa.phenotype <- myY.init[, 1]
+    
+    print("IDs for genotype data are ")
+    print(head(taxa.snp))
+    
+    print("IDs for phenotype data are ")
+    print(head(taxa.phenotype))
+    
+    ss.x <- which(taxa.snp %in% intersect( taxa.snp, taxa.phenotype ) )
+    ss.y <- which(taxa.phenotype %in% intersect( taxa.snp, taxa.phenotype ) )
+    
+    if( length(ss.x) < length(taxa.snp)/2 ) warning("More half of samples does not match")
+    if( length(ss.y) < length(taxa.phenotype)/2 ) warning("More half of samples does not match")
+    
+    if( length(ss.x) < 10 ) stop("Check your sample IDs")
+    if( length(ss.y) < 10 ) stop("Check your sample IDs")
+    
+    
+    if(identical(as.character(myX.init[1,ss.x+11]), as.character(myY.init[ss.y, 1]) )){
+      myX <- as.data.frame( myX.init[,c(1:11,ss.x+11)], stringsAsFactors=FALSE )
+      myGD <- myGD.init[ss.x,]
+      myGT <- myGT.init[,ss.x]
+      myGM <- myGM.init
+      myY <- myY.init[ss.y,]
+    } else {
+      stop("Sample IDs between genotypes and phenotypes do not match")
+    }
+    
+    
+    
+        
     print("Performing the numericalization procedure for genotpe data.")
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
     myGM.init <- myX.init[,1:4]
@@ -61,35 +111,6 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     # End ---------------------------------------------------------------------
 
 
-    # Matching of X and Y -------------------------------------------------------
-    taxa.snp <- as.character( myX.init[1,12:ncol(myX.init), drop=TRUE] )
-    taxa.phenotype <- myY.init[, 1]
-    
-    print("IDs for genotype data are ")
-    print(head(taxa.snp))
-    
-    print("IDs for phenotype data are ")
-    print(head(taxa.phenotype))
-
-    ss.x <- which(taxa.snp %in% intersect( taxa.snp, taxa.phenotype ) )
-    ss.y <- which(taxa.phenotype %in% intersect( taxa.snp, taxa.phenotype ) )
-    
-    if( length(ss.x) < length(taxa.snp)/2 ) warning("More half of samples does not match")
-    if( length(ss.y) < length(taxa.phenotype)/2 ) warning("More half of samples does not match")
-    
-    if( length(ss.x) < 10 ) stop("Check your sample IDs")
-    if( length(ss.y) < 10 ) stop("Check your sample IDs")
-    
-
-    if(identical(as.character(myX.init[1,ss.x+11]), as.character(myY.init[ss.y, 1]) )){
-        myX <- as.data.frame( myX.init[,c(1:11,ss.x+11)], stringsAsFactors=FALSE )
-        myGD <- myGD.init[ss.x,]
-        myGT <- myGT.init[,ss.x]
-        myGM <- myGM.init
-        myY <- myY.init[ss.y,]
-    } else {
-        stop("Sample IDs between genotypes and phenotypes do not match")
-    }
 
     # myX[ss.x+11,][1:10,1:10]
     # myY[ss.y,][1:10,]

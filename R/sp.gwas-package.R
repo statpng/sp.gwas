@@ -6,7 +6,8 @@
 #' @details The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
 #' @return A list of data files(genotype, phenotype, etc.), results for selection probabilities, and manhattan plot for multiple traits.
 
-#' @import glmnet CMplot stats ggplot2 utils dplyr
+#' @import glmnet CMplot stats ggplot2 utils dplyr 
+#' @importFrom gtools mixedorder
 #' @importFrom tidyr spread gather unite
 #' @importFrom gridExtra grid.arrange
 #' @importFrom compiler cmpfun
