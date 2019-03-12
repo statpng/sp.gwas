@@ -108,7 +108,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         norm.pvalue[j] <- round( shapiro.test(myY[,j+1])$p.value, 4)
     }
 
-    Hist.y <- myY.original %>%
+    Hist.y.original <- myY.original %>%
         .[,-1,drop=F] %>%
         gather(PHENOTYPE) %>%
         data.frame(., pvalue=rep(norm.pvalue.original, each=nrow(.)/length(norm.pvalue.original))) %>%
