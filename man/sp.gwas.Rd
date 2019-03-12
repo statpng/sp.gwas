@@ -24,7 +24,7 @@ sp.gwas(genotype.path = NULL, phenotype.path = NULL,
 
 \item{method}{A method of penalized regression. It includes "lasso" for the lasso and "enet" for the elastic-net.}
 
-\item{family}{A family of response variable(phenotype). It is "gaussian" for continuous response variable, "binomial" for binary, "poisson" for count, etc. For more details, see the function(\code{stats::glm}). Default is "gaussian".}
+\item{family}{A family of response variable(phenotype). It is "gaussian" for continuous response variable, "binomial" for binary, "poisson" for count, etc. Now you can use only the same family for the multi phenotypes. For more details, see the function(\code{stats::glm}). Default is "gaussian".}
 
 \item{Falsediscovery}{The expected number of false discovery to be controlled. The larger it is, the higher threshold becomes. Default is c(1, 5, 10).}
 
@@ -46,7 +46,7 @@ sp.gwas(genotype.path = NULL, phenotype.path = NULL,
 }
 \value{
 \item{Histogram of original and transformed phenotypes}{Histogram of phenotypes with p-value by Shapiro-test on the top right corner.}
-    \item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.t.}
+    \item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.original(for "gaussian").}
     \item{sp.res}{A list of sp.df and threshold.}
     \item{Circular Manhattan plot}{Manhattan plot for the first phenotype is the innermost circle. Colors for chromosome is fixed, so that if you want to change colors, you would edit the R code of sp.manhattan function.}
 }
@@ -56,7 +56,17 @@ Input data is the hapmap formatted SNP data and phenotype data corresponding to 
 Output includes files of three types: (1) Matched data files (genotype, numerical, snp info, and phenotype), (2) Results file (selection probabilities and thresholds), (3) Circular manhattan plot with (blue dotted) significant line corresponding to the largest value among user-defined false discoveries.
 }
 \details{
-The penalty function of \code{pclogit} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
+The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
+\code{An algorithm of selection probabilities with elastic-net.} \cr
+0 : Let us assume that a genomic data has \code{n} samples and \code{p} variables. \cr
+1 : For all \eqn{\Lambda=(\alpha, \lambda)}, where \eqn{\alpha in [0,1]}, \eqn{\lambda>0}. \cr
+2 : \code{for} k=1 to K \code{do}. \cr
+3 : ------- Subsample \eqn{I_k} with size \eqn{[n/2]}. \cr
+4 : ------- Compute \eqn{\hat{\beta}_j^{\Lambda}(I_k)} with regularization model. \cr
+5 : \code{end for}
+6 : \eqn{SP_j^\Lambda = \frac{1}{K}\#\{k\le K: \hat{\beta}_j^\Lambda(I_k) \ne 0 \} }. \cr
+7 : \eqn{SP_j = \underset{\Lambda}{\max}SP_j^\Lambda, j=1,\cdots, p}. \cr
+8 : \code{return} \code{SP}=\eqn{(SP_1, \cdots, SP_p)}. \cr
 }
 \examples{
 # Not run

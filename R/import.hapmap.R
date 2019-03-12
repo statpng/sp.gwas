@@ -96,21 +96,22 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     if( family=="gaussian" ){
     print("Performing the normalization for phenotypes, but there is no evidence that they can be normalized.")
 
-    myY.t <- myY
+      
+      myY.original <- myY
     for( j in 1:(ncol(myY)-1) ){
-        myY.t[,j+1] <- boxcox(myY[,j+1], standardize = FALSE)$x.t
+      myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
     }
 
-    norm.pvalue <- norm.pvalue.t <- NULL
-    for( j in 1:(ncol(myY)-1) ){
+    norm.pvalue.original <- norm.pvalue <- NULL
+    for( j in 1:(ncol(myY.original)-1) ){
+        norm.pvalue.original[j] <- round( shapiro.test(myY.original[,j+1])$p.value, 4)
         norm.pvalue[j] <- round( shapiro.test(myY[,j+1])$p.value, 4)
-        norm.pvalue.t[j] <- round( shapiro.test(myY.t[,j+1])$p.value, 4)
     }
 
-    Hist.y <- myY %>%
+    Hist.y <- myY.original %>%
         .[,-1,drop=F] %>%
         gather(PHENOTYPE) %>%
-        data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
+        data.frame(., pvalue=rep(norm.pvalue.original, each=nrow(.)/length(norm.pvalue.original))) %>%
         ggplot(aes(value)) +
         geom_histogram(fill="white", colour="black") +
         xlab("Original Phenotypes") +
@@ -120,10 +121,10 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         geom_label(x=Inf, y=Inf, aes(label=pvalue),
                    vjust = "inward", hjust = "inward")
 
-    Hist.y.t <- myY.t %>%
+    Hist.y <- myY %>%
         .[,-1,drop=FALSE] %>%
         gather(PHENOTYPE) %>%
-        data.frame(., pvalue=rep(norm.pvalue.t, each=nrow(.)/length(norm.pvalue))) %>%
+        data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
         ggplot(aes(value)) +
         geom_histogram(fill="white", colour="black") +
         xlab("Transformed phenotypes") +
@@ -133,7 +134,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         geom_label(x=Inf, y=Inf, aes(label=pvalue),
                    vjust = "inward", hjust = "inward")
 
-    Hist.norm <- grid.arrange(Hist.y, Hist.y.t, nrow=1, heights=15)
+    Hist.norm <- grid.arrange(Hist.y.original, Hist.y, nrow=1, heights=15)
 
     ggsave(Hist.norm, filename = paste0(save.path,"/[1]Hist.phenotype.norm.pdf"), width = 10, height = 5)
 
