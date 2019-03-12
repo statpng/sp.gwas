@@ -1,0 +1,42 @@
+$genotype.path
+[1] "./example/genotype1.csv"
+
+$phenotype.path
+[1] "./example/phenotype1.csv"
+
+$save.path
+[1] "./Data1_1"
+
+$y.col
+[1] 4
+
+$method
+[1] "lasso"
+
+$family
+[1] "gaussian"
+
+$Falsediscovery
+[1]  1  5 10
+
+$plot.ylim
+NULL
+
+$lambda.min.quantile
+[1] 0.5
+
+$n.lambda
+[1] 10
+
+$K
+[1] 100
+
+$psub
+[1] 0.5
+
+$plot.name
+[1] ""
+
+$plot.type
+[1] "jpg"
+
