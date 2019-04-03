@@ -75,19 +75,6 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     if( length(ss.y) < 10 ) stop("Check your sample IDs")
     
     
-    if(identical(as.character(myX.init[1,ss.x+11]), as.character(myY.init[ss.y, 1]) )){
-      myX <- as.data.frame( myX.init[,c(1:11,ss.x+11)], stringsAsFactors=FALSE )
-      myGD <- myGD.init[ss.x,]
-      myGT <- myGT.init[,ss.x]
-      myGM <- myGM.init
-      myY <- myY.init[ss.y,]
-    } else {
-      stop("Sample IDs between genotypes and phenotypes do not match")
-    }
-    
-    
-    
-        
     print("Performing the numericalization procedure for genotpe data.")
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
     myGM.init <- myX.init[,1:4]
@@ -111,6 +98,16 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     # End ---------------------------------------------------------------------
 
 
+    if(identical(as.character(myX.init[1,ss.x+11]), as.character(myY.init[ss.y, 1]) )){
+      myX <- as.data.frame( myX.init[,c(1:11,ss.x+11)], stringsAsFactors=FALSE )
+      myGD <- myGD.init[ss.x,]
+      myGT <- myGT.init[,ss.x]
+      myGM <- myGM.init
+      myY <- myY.init[ss.y,]
+    } else {
+      stop("Sample IDs between genotypes and phenotypes do not match")
+    }
+    
 
     # myX[ss.x+11,][1:10,1:10]
     # myY[ss.y,][1:10,]
