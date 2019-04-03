@@ -1,5 +1,8 @@
 import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.col=NULL, y.id.col=2, family="gaussian"){
 
+
+
+# Import a genotype data --------------------------------------------------
     if( length( dim(genotype.path) ) > 0 ){
       myX.init <- genotype.path
     } else {
@@ -17,6 +20,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
       } 
     }
 
+
+# Import a phenotype data -------------------------------------------------
   if( length( dim(phenotype.path) ) > 0 ){
     myY.init <- phenotype.path
   } else {
@@ -34,6 +39,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     }
   }
 
+
+# Restriction of the number of phenotypes ---------------------------------
     if( ncol(myY.init) > 5 & is.null(y.col) ){
         stop("There are too many phenotypes. Choose 4 or less.")
     } else if(ncol(myY.init) <= 5 & is.null(y.col)){
@@ -42,9 +49,13 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         myY.init <- myY.init[,c(y.id.col, y.col)]
     }
 
+
+# Reorder the dataset according to the names ------------------------------
     myX.init <- myX.init[,c(1:11, order( myX.init[1, 12:ncol(myX.init) ] )+11)]
     myY.init <- myY.init[order( myY.init[, 1] ), ]
-    
+
+
+# Remove missing values ---------------------------------------------------
     print(paste0("Removing the missing values of phenotypes(",
                  sum(apply(myY.init, 1, function(x) any(is.na(x)))),
                  ")."
@@ -52,9 +63,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     
     myY.init <- myY.init[!apply(myY.init, 1, function(x) any(is.na(x))), ]
     
-    
-    
-    # Matching of X and Y -------------------------------------------------------
+# Match the genotype with the phenotype -----------------------------------
     print("Matcing procedure between genotpe and phenotype")
     taxa.snp <- as.character( myX.init[1,12:ncol(myX.init), drop=TRUE] )
     taxa.phenotype <- myY.init[, 1]
@@ -74,7 +83,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     if( length(ss.x) < 10 ) stop("Check your sample IDs")
     if( length(ss.y) < 10 ) stop("Check your sample IDs")
     
-    
+
+# Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
     myGM.init <- myX.init[,1:4]
