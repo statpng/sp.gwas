@@ -17,21 +17,22 @@
 #' @param n.lambda The length of lambda sequence. The larger n.lambda, the more detailed lambda sequence will be.
 #' @param K	The number of iterations in resampling when calculating the selection probabilities.
 #' @param psub The subsampling proportion. For efficiency, default is 0.5.
+#' @param manhattan.type A type of manhattan plot to be drawn includes circular('c') and rectangular('m').
 #' @param plot.name A name of plot file.
 #' @param plot.type A type of plot file which includes "jpg", "pdf", "tiff", etc.
 #' @param plot.dpi A resolution of plot. If you want to get a high-resolution image, plot.dpi should be large.
 
-#' @details The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
-#' \code{An algorithm of selection probabilities with elastic-net.} \cr
+#' @details The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr \cr
+#' \code{An algorithm of selection probabilities with elastic-net.} \cr \cr
 #' 0 : Let us assume that a genomic data has \code{n} samples and \code{p} variables. \cr
 #' 1 : For all \eqn{\Lambda=(\alpha, \lambda)}, where \eqn{\alpha in [0,1]}, \eqn{\lambda>0}. \cr
 #' 2 : \code{for} k=1 to K \code{do}. \cr
-#' 3 : ------- Subsample \eqn{I_k} with size \eqn{[n/2]}. \cr
+#' 3 : ------- Subsample \eqn{I_k} with size \eqn{[n/2].} \cr
 #' 4 : ------- Compute \eqn{\hat{\beta}_j^{\Lambda}(I_k)} with regularization model. \cr
-#' 5 : \code{end for}
-#' 6 : \eqn{SP_j^\Lambda = \frac{1}{K}\#\{k\le K: \hat{\beta}_j^\Lambda(I_k) \ne 0 \} }. \cr
-#' 7 : \eqn{SP_j = \underset{\Lambda}{\max}SP_j^\Lambda, j=1,\cdots, p}. \cr
-#' 8 : \code{return} \code{SP}=\eqn{(SP_1, \cdots, SP_p)}. \cr
+#' 5 : \code{end for.} \cr
+#' 6 : \eqn{SP_j^\Lambda = \frac{1}{K}\#\{k\le K: \hat{\beta}_j^\Lambda(I_k) \ne 0 \}. } \cr
+#' 7 : \eqn{SP_j =  \max_\Lambda SP_j^\Lambda, ~~j=1,\cdots, p.} \cr
+#' 8 : \code{return} \code{SP}=\eqn{(SP_1, \cdots, SP_p).} \cr
 #' @return
 #'     \item{Histogram of original and transformed phenotypes}{Histogram of phenotypes with p-value by Shapiro-test on the top right corner.}
 #'     \item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.original(for "gaussian").}
@@ -55,9 +56,30 @@
 #' #         n.lambda = 10,
 #' #         K = 100,
 #' #         psub = 0.5,
+#' #         manhattan.type = c("c", "r")[2],
 #' #         plot.name = "Test",
 #' #         plot.type = "jpg",
 #' #         plot.dpi = 300)
+#' #' A function
+#'
+#'
+#' @return The dataframe with new mean and sum columns
+#' @import CMplot
+#' @import dplyr
+#' @import ggplot2
+#' @import glmnet
+#' @import utils
+#' @importFrom bestNormalize boxcox
+#' @importFrom compiler cmpfun
+#' @importFrom data.table fread
+#' @importFrom gridExtra grid.arrange
+#' @importFrom gtools mixedorder
+#' @importFrom readxl read_xlsx
+#' @importFrom tidyr gather
+#' @importFrom tidyr spread
+#' @importFrom tidyr unite
+#' @importFrom writexl write_xlsx
+#' @importFrom stats quantile
 #' @export sp.gwas
 sp.gwas <- function( genotype.path = NULL,
                      phenotype.path = NULL,
@@ -72,6 +94,7 @@ sp.gwas <- function( genotype.path = NULL,
                      n.lambda = 10,
                      K = 100,
                      psub = 0.5,
+                     manhattan.type = "c",
                      plot.name = "",
                      plot.type = "jpg",
                      plot.dpi = 300
@@ -118,6 +141,7 @@ sp.gwas <- function( genotype.path = NULL,
     sp.manhattan(sp.df=sp.res$sp.df,
                  threshold=sp.res$threshold,
                  save.path=save.path,
+                 manhattan.type=manhattan.type,
                  plot.ylim=plot.ylim,
                  plot.type=plot.type,
                  dpi=plot.dpi
@@ -145,3 +169,5 @@ sp.gwas <- function( genotype.path = NULL,
     sink()
 
 }
+
+

@@ -1,3 +1,18 @@
+#' @import CMplot
+#' @import dplyr
+#' @import ggplot2
+#' @import glmnet
+#' @import utils
+#' @importFrom bestNormalize boxcox
+#' @importFrom compiler cmpfun
+#' @importFrom data.table fread
+#' @importFrom gridExtra grid.arrange
+#' @importFrom gtools mixedorder
+#' @importFrom readxl read_xlsx
+#' @importFrom tidyr gather
+#' @importFrom tidyr spread
+#' @importFrom tidyr unite
+#' @importFrom writexl write_xlsx
 import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.col=NULL, y.id.col=2, family="gaussian"){
 
 

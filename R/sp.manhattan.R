@@ -1,6 +1,22 @@
+#' @import CMplot
+#' @import dplyr
+#' @import ggplot2
+#' @import glmnet
+#' @import utils
+#' @importFrom bestNormalize boxcox
+#' @importFrom compiler cmpfun
+#' @importFrom data.table fread
+#' @importFrom gridExtra grid.arrange
+#' @importFrom gtools mixedorder
+#' @importFrom readxl read_xlsx
+#' @importFrom tidyr gather
+#' @importFrom tidyr spread
+#' @importFrom tidyr unite
+#' @importFrom writexl write_xlsx
 sp.manhattan <- function(sp.df,
                          threshold,
                          save.path,
+                         manhattan.type = "m",
                          plot.ylim = NULL,
                          plot.name = "",
                          plot.type = c("pdf", "jpg"),
@@ -20,8 +36,19 @@ sp.manhattan <- function(sp.df,
                        sep = ""), width = 5.5 * 2 * dpi, height = 5.5 * 2 *
                      dpi, res = dpi)
 
+    multracks <- TRUE
+    file.output <- FALSE
+    
+    if( manhattan.type == "r" ){
+        manhattan.type <- "m"
+        multracks <- FALSE
+        file.output <- TRUE
+        gd <- getwd()
+        setwd(save.path)
+    }
+    
     sp.df %>%
-        CMplot(plot.type="c",
+        CMplot(plot.type=manhattan.type,
                col=matrix(c("orange", "grey30",
                             "darkblue", "green",
                             "darkgreen", "darkmagenta",
@@ -38,13 +65,19 @@ sp.manhattan <- function(sp.df,
                threshold.lwd = 2,
                ylim=plot.ylim,
                LOG10 = FALSE,
+               ylab = "Selection Probabilities",
                amplify = TRUE,
+               multracks = multracks,
                signal.col = "red",
                signal.cex=1.5,
                chr.den.col="black",
-               file.output=FALSE,
+               file.output=file.output,
                file="jpg", dpi=dpi)
     dev.off()
 
+    
+    if( manhattan.type == "r" ){
+        setwd(gd)
+    }
 }
 

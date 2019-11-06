@@ -8,8 +8,8 @@ sp.gwas(genotype.path = NULL, phenotype.path = NULL,
   save.path = "./sp.folder", y.col = 4, y.id.col = 2,
   method = "lasso", family = "gaussian", Falsediscovery = c(1, 5,
   10), plot.ylim = NULL, lambda.min.quantile = 0.5, n.lambda = 10,
-  K = 100, psub = 0.5, plot.name = "", plot.type = "jpg",
-  plot.dpi = 300)
+  K = 100, psub = 0.5, manhattan.type = "c", plot.name = "",
+  plot.type = "jpg", plot.dpi = 300)
 }
 \arguments{
 \item{genotype.path}{A path of a snp data which is a \code{p} by \code{(n+11)} matrix of genotypes. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.}
@@ -38,6 +38,8 @@ sp.gwas(genotype.path = NULL, phenotype.path = NULL,
 
 \item{psub}{The subsampling proportion. For efficiency, default is 0.5.}
 
+\item{manhattan.type}{A type of manhattan plot to be drawn includes circular('c') and rectangular('m').}
+
 \item{plot.name}{A name of plot file.}
 
 \item{plot.type}{A type of plot file which includes "jpg", "pdf", "tiff", etc.}
@@ -49,6 +51,8 @@ sp.gwas(genotype.path = NULL, phenotype.path = NULL,
     \item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.original(for "gaussian").}
     \item{sp.res}{A list of sp.df and threshold.}
     \item{Circular Manhattan plot}{Manhattan plot for the first phenotype is the innermost circle. Colors for chromosome is fixed, so that if you want to change colors, you would edit the R code of sp.manhattan function.}
+
+The dataframe with new mean and sum columns
 }
 \description{
 For analysis of high-dimensional genomic data, penalized regression can be a solution to accomodate correlations between predictors. Moreover, selection probabilities do not depend on tuning parameter selection so that it produces a stablity selection. Thresholds are also generated to control the false positives(errors). Thresholds vary with the expected number of false positives to be controlled by the user.
@@ -56,17 +60,17 @@ Input data is the hapmap formatted SNP data and phenotype data corresponding to 
 Output includes files of three types: (1) Matched data files (genotype, numerical, snp info, and phenotype), (2) Results file (selection probabilities and thresholds), (3) Circular manhattan plot with (blue dotted) significant line corresponding to the largest value among user-defined false discoveries.
 }
 \details{
-The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr
-\code{An algorithm of selection probabilities with elastic-net.} \cr
+The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1+(1-\alpha)||\beta||_2/2,} where \eqn{\alpha} is a mixing proportion of ridge and the lasso, and \eqn{\beta} is regression coefficients. This penalty is equivalent to the Lasso penalty if \code{alpha=1}. \cr \cr
+\code{An algorithm of selection probabilities with elastic-net.} \cr \cr
 0 : Let us assume that a genomic data has \code{n} samples and \code{p} variables. \cr
 1 : For all \eqn{\Lambda=(\alpha, \lambda)}, where \eqn{\alpha in [0,1]}, \eqn{\lambda>0}. \cr
 2 : \code{for} k=1 to K \code{do}. \cr
-3 : ------- Subsample \eqn{I_k} with size \eqn{[n/2]}. \cr
+3 : ------- Subsample \eqn{I_k} with size \eqn{[n/2].} \cr
 4 : ------- Compute \eqn{\hat{\beta}_j^{\Lambda}(I_k)} with regularization model. \cr
-5 : \code{end for}
-6 : \eqn{SP_j^\Lambda = \frac{1}{K}\#\{k\le K: \hat{\beta}_j^\Lambda(I_k) \ne 0 \} }. \cr
-7 : \eqn{SP_j = \underset{\Lambda}{\max}SP_j^\Lambda, j=1,\cdots, p}. \cr
-8 : \code{return} \code{SP}=\eqn{(SP_1, \cdots, SP_p)}. \cr
+5 : \code{end for.} \cr
+6 : \eqn{SP_j^\Lambda = \frac{1}{K}\#\{k\le K: \hat{\beta}_j^\Lambda(I_k) \ne 0 \}. } \cr
+7 : \eqn{SP_j =  \max_\Lambda SP_j^\Lambda, ~~j=1,\cdots, p.} \cr
+8 : \code{return} \code{SP}=\eqn{(SP_1, \cdots, SP_p).} \cr
 }
 \examples{
 # Not run
@@ -83,9 +87,13 @@ The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1
 #         n.lambda = 10,
 #         K = 100,
 #         psub = 0.5,
+#         manhattan.type = c("c", "r")[2],
 #         plot.name = "Test",
 #         plot.type = "jpg",
 #         plot.dpi = 300)
+#' A function
+
+
 }
 \author{
 Kipoong Kim <kkp7700@gmail.com>

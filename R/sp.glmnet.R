@@ -1,3 +1,4 @@
+#' @importFrom stats quantile
 sp.glmnet <- function(x, y,
                       family="gaussian",
                       seq.alpha=NULL,
