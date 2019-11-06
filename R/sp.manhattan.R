@@ -77,7 +77,7 @@ sp.manhattan <- function(sp.df,
 
     
     if( manhattan.type == "r" ){
-        setwd(gd)
+        setwd("..")
     }
 }
 
