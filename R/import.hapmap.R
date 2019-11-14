@@ -38,7 +38,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
   if( ncol(myY.init) > 5 & is.null(y.col) ){
     stop("There are too many phenotypes. Choose 4 or less.")
   } else if(ncol(myY.init) <= 5 & is.null(y.col)){
-    myY.init <- myY.init[ , c(y.id.col, which( sapply( myY.init, is.numeric ) ) )]
+    myY.init <- myY.init[ , c(y.id.col, 1:(ncol(myY.init)-1)-1) ]
   } else if (!is.null(y.col)){
     myY.init <- myY.init[,c(y.id.col, y.col)]
   }
@@ -156,7 +156,11 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
     print("Performing the normalization for phenotypes, but there is no evidence that they can be normalized.")
 
       
-      myY.original <- myY
+    myY.original <- myY
+    for( j in 1:(ncol(myY)-1) ){
+      myY.original[,j+1] <- as.numeric(as.character(myY.original[,j+1]))
+    }
+    
     for( j in 1:(ncol(myY)-1) ){
       myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
     }
