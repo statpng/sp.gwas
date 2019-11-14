@@ -53,6 +53,7 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
   if( family == "gaussian" ){
     for( j in 1:(ncol(myY.init)-1) ){
       if( length( table( myY.init[,j+1] ) ) < 10 ) warning(paste0("The category of ", j, "-th phenotype is less than 5. Isn't it categorical variable?"))
+      if( class( myY.init[,j+1] ) != "numeric" ) stop("Please confirm classes of your phenotypes.")
     }
   }
   
@@ -164,9 +165,9 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
 
       
     myY.original <- myY
-    for( j in 1:(ncol(myY)-1) ){
-      myY.original[,j+1] <- as.numeric(as.character(myY.original[,j+1]))
-    }
+    # for( j in 1:(ncol(myY)-1) ){
+    #   myY.original[,j+1] <- as.numeric(as.character(myY.original[,j+1]))
+    # }
     
     for( j in 1:(ncol(myY)-1) ){
       myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
