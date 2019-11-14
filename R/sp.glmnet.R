@@ -13,7 +13,7 @@ sp.glmnet <- function(x, y,
     if( NCOL(y)==1 & (family=="mgaussian") ) stop("The family should not be 'mgaussian'")
     if( missing(setseed) ) stop("Since setseed is missed, please enter a value of setseed.")
 
-    if( family=="binomial" ) y <- ifelse( as.numeric(factor(y)) == 1, 0, 1 )
+    if( family=="binomial" ) y <- ifelse( as.numeric(factor(as.vector(as.matrix(y)))) == 1, 0, 1 )
 
     if(is.null(seq.alpha)) seq.alpha <- 1:9*0.1
     if(is.null(n.lambda)) n.lambda <- 10

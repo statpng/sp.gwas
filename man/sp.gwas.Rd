@@ -5,16 +5,19 @@
 \title{Selection probabilities using generalized linear model with regularization for a SNP data in the hapmap format.}
 \usage{
 sp.gwas(genotype.path = NULL, phenotype.path = NULL,
-  save.path = "./sp.folder", y.col = 4, y.id.col = 2,
-  method = "lasso", family = "gaussian", Falsediscovery = c(1, 5,
-  10), plot.ylim = NULL, lambda.min.quantile = 0.5, n.lambda = 10,
-  K = 100, psub = 0.5, manhattan.type = "c", plot.name = "",
-  plot.type = "jpg", plot.dpi = 300)
+  input.type = c("object", "path"), save.path = "./sp.folder",
+  y.col = 4, y.id.col = 2, method = "lasso", family = "gaussian",
+  Falsediscovery = c(1, 5, 10), plot.ylim = NULL,
+  lambda.min.quantile = 0.5, n.lambda = 10, K = 100, psub = 0.5,
+  manhattan.type = "c", plot.name = "", plot.type = "jpg",
+  plot.dpi = 300)
 }
 \arguments{
 \item{genotype.path}{A path of a snp data which is a \code{p} by \code{(n+11)} matrix of genotypes. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.}
 
 \item{phenotype.path}{A path of a phenotype data which is an \code{n} by \code{p} matrix of phenotypes. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.}
+
+\item{input.type}{If \code{input.type} is "object", obejects of genotype/phenotype.path will be entered. If "path", paths of genotype and phenotype will do.}
 
 \item{save.path}{A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. If then, sp.gwas is not going to generate the results but just loading the output files(.RData).}
 
@@ -76,6 +79,7 @@ The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1
 # Not run
 # sp.gwas(genotype.path = "./input.snp.csv",
 #         phenotype.path = "./input.phenotype.csv",
+#         input.type = c("path", "object")[1],
 #         save.path = "./Test",
 #         y.col=5:8,
 #         y.id.col=2,

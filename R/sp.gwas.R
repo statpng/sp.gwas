@@ -6,6 +6,7 @@
 
 #' @param genotype.path A path of a snp data which is a \code{p} by \code{(n+11)} matrix of genotypes. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.
 #' @param phenotype.path A path of a phenotype data which is an \code{n} by \code{p} matrix of phenotypes. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
+#' @param input.type If \code{input.type} is "object", obejects of genotype/phenotype.path will be entered. If "path", paths of genotype and phenotype will do.
 #' @param y.col The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 4.
 #' @param y.id.col The column of sample ID in the phenotype data file. Default is 2.
 #' @param method A method of penalized regression. It includes "lasso" for the lasso and "enet" for the elastic-net.
@@ -45,6 +46,7 @@
 #' # Not run
 #' # sp.gwas(genotype.path = "./input.snp.csv",
 #' #         phenotype.path = "./input.phenotype.csv",
+#' #         input.type = c("path", "object")[1],
 #' #         save.path = "./Test",
 #' #         y.col=5:8,
 #' #         y.id.col=2,
@@ -83,6 +85,7 @@
 #' @export sp.gwas
 sp.gwas <- function( genotype.path = NULL,
                      phenotype.path = NULL,
+                     input.type = c("object", "path"),
                      save.path = "./sp.folder",
                      y.col = 4,
                      y.id.col = 2,
@@ -109,6 +112,7 @@ sp.gwas <- function( genotype.path = NULL,
     if( !file.exists( paste0(save.path,"/[1]Data",".RData") ) ){
         myDATA <- import.hapmap(genotype.path=genotype.path,
                                 phenotype.path=phenotype.path,
+                                input.type=input.type,
                                 save.path=save.path,
                                 y.col=y.col,
                                 y.id.col=y.id.col,

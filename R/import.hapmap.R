@@ -13,12 +13,45 @@
 #' @importFrom tidyr spread
 #' @importFrom tidyr unite
 #' @importFrom writexl write_xlsx
-import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.col=NULL, y.id.col=2, family="gaussian"){
+import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c("path", "object"), save.path, y.col=NULL, y.id.col=2, family="gaussian"){
 
-
-
+  # Import a phenotype data -------------------------------------------------
+  if( length( dim(phenotype.path) ) > 0 | input.type=="object" ){
+    myY.init <- phenotype.path
+  } else {
+    if(is.null(phenotype.path)) {
+      print("Select the path of phenotype data which has sample IDs in its first column.")
+      phenotype.path <- choose.files()
+    }
+    
+    if( grepl("*.xlsx", phenotype.path) ){
+      myY.init <- read_excel(phenotype.path)
+    } else if( grepl("*.csv|*.txt", phenotype.path) ){
+      myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
+    } else {
+      myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
+    }
+  }
+  
+  
+  # Restriction of the number of phenotypes ---------------------------------
+  if( ncol(myY.init) > 5 & is.null(y.col) ){
+    stop("There are too many phenotypes. Choose 4 or less.")
+  } else if(ncol(myY.init) <= 5 & is.null(y.col)){
+    myY.init <- myY.init[ , c(y.id.col, which( sapply( myY.init, is.numeric ) ) )]
+  } else if (!is.null(y.col)){
+    myY.init <- myY.init[,c(y.id.col, y.col)]
+  }
+  # myY.init <- myY.init[!duplicated(myY.init[,y.id.col]),]
+  
+  if( any(duplicated(myY.init[,y.id.col])) ){
+    cat( "Duplicated phenotype IDs: {", myY.init[,y.id.col][ duplicated(myY.init[,y.id.col]) ], "}\n" )
+    stop("There are duplicated sample IDs in phenotype data.")
+  }
+  
+  
 # Import a genotype data --------------------------------------------------
-    if( length( dim(genotype.path) ) > 0 ){
+    if( length( dim(genotype.path) ) > 0 | input.type=="object" ){
       myX.init <- genotype.path
     } else {
       if(is.null(genotype.path)) {
@@ -34,35 +67,16 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
         myX.init <- as.data.frame( fread(genotype.path, header=FALSE), stringsAsFactors=FALSE )
       } 
     }
-
-
-# Import a phenotype data -------------------------------------------------
-  if( length( dim(phenotype.path) ) > 0 ){
-    myY.init <- phenotype.path
-  } else {
-    if(is.null(phenotype.path)) {
-        print("Select the path of phenotype data which has sample IDs in its first column.")
-        phenotype.path <- choose.files()
-    }
-
-    if( grepl("*.xlsx", phenotype.path) ){
-        myY.init <- read_excel(phenotype.path)
-    } else if( grepl("*.csv|*.txt", phenotype.path) ){
-        myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
-    } else {
-      myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
-    }
+  
+  if( any(duplicated(as.character( myX.init[1, 12:ncol(myX.init) ] ) )) ){
+    cat( "Duplicated genotype IDs: {", 
+         as.character( myX.init[1, 12:ncol(myX.init) ] )[
+           duplicated(as.character( myX.init[1, 12:ncol(myX.init) ] ) )
+         ],
+         "}\n" )
+    stop("There are duplicated sample IDs in genotype data.")
   }
-
-
-# Restriction of the number of phenotypes ---------------------------------
-    if( ncol(myY.init) > 5 & is.null(y.col) ){
-        stop("There are too many phenotypes. Choose 4 or less.")
-    } else if(ncol(myY.init) <= 5 & is.null(y.col)){
-        myY.init <- myY.init[ , c(y.id.col, which( sapply( myY.init, is.numeric ) ) )]
-    } else if (!is.null(y.col)){
-        myY.init <- myY.init[,c(y.id.col, y.col)]
-    }
+  
 
 
 # Reorder the dataset according to the names ------------------------------
@@ -83,11 +97,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
     taxa.snp <- as.character( myX.init[1,12:ncol(myX.init), drop=TRUE] )
     taxa.phenotype <- myY.init[, 1]
     
-    print("IDs for genotype data are ")
-    print(head(taxa.snp))
-    
-    print("IDs for phenotype data are ")
-    print(head(taxa.phenotype))
+    cat("IDs for genotype data are \n{", head(taxa.snp, 10), "}\n")
+    cat("IDs for phenotype data are \n{", head(taxa.phenotype, 10), "}\n")
     
     ss.x <- which(taxa.snp %in% intersect( taxa.snp, taxa.phenotype ) )
     ss.y <- which(taxa.phenotype %in% intersect( taxa.snp, taxa.phenotype ) )
@@ -130,6 +141,11 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, save.path, y.
       myGM <- myGM.init
       myY <- myY.init[ss.y,]
     } else {
+      xnyc <- setdiff(as.character(myX.init[1,ss.x+11]), as.character(myY.init[ss.y, 1]))
+      ynxc <- setdiff(as.character(myY.init[ss.y, 1]), as.character(myX.init[1,ss.x+11]))
+      xydifferences <- unique(c(xnyc, ynxc))
+      if( length(xydifferences) == 0 ) xydifferences <- "NULL"
+      cat("Sample IDs which differ between genotype and phenotype are {", xydifferences, "}\n")
       stop("Sample IDs between genotypes and phenotypes do not match")
     }
     
