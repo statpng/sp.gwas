@@ -49,6 +49,13 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
     stop("There are duplicated sample IDs in phenotype data.")
   }
   
+  print("Checking whether class of phenotype corresponds to family")
+  if( family == "gaussian" ){
+    for( j in 1:(ncol(myY.init)-1) ){
+      if( length( table( myY.init[,j+1] ) ) < 10 ) warning(paste0("The category of ", j, "-th phenotype is less than 5. Isn't it categorical variable?"))
+    }
+  }
+  
   
 # Import a genotype data --------------------------------------------------
     if( length( dim(genotype.path) ) > 0 | input.type=="object" ){
