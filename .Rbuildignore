@@ -5,3 +5,6 @@ gitignore
 README.md
 example
 ^.*\.pdf$
+check
+sp.folder
+EXAMPLE

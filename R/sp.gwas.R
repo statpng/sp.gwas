@@ -4,17 +4,18 @@
 #' Input data is the hapmap formatted SNP data and phenotype data corresponding to SNP data.
 #' Output includes files of three types: (1) Matched data files (genotype, numerical, snp info, and phenotype), (2) Results file (selection probabilities and thresholds), (3) Circular manhattan plot with (blue dotted) significant line corresponding to the largest value among user-defined false discoveries.
 
-#' @param genotype.path A path of a snp data which is a \code{p} by \code{(n+11)} matrix of genotypes. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.
-#' @param phenotype.path A path of a phenotype data which is an \code{n} by \code{p} matrix of phenotypes. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
-#' @param input.type If \code{input.type} is "object", obejects of genotype/phenotype.path will be entered. If "path", paths of genotype and phenotype will do.
-#' @param y.col The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 4.
-#' @param y.id.col The column of sample ID in the phenotype data file. Default is 2.
+#' @param genotype Either R object or file path can be considered. A genotype data is a \code{p} by \code{(n+11)} matrix. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.
+#' @param phenotype Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
+#' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
+#' @param y.col The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 2.
+#' @param y.id.col The column of sample ID in the phenotype data file. Default is 1.
+#' @param normalization If TRUE. phenotypes are converted to be normal-shape using box-cox transformation when all phenotypes are positive.
 #' @param method A method of penalized regression. It includes "lasso" for the lasso and "enet" for the elastic-net.
 #' @param family A family of response variable(phenotype). It is "gaussian" for continuous response variable, "binomial" for binary, "poisson" for count, etc. Now you can use only the same family for the multi phenotypes. For more details, see the function(\code{stats::glm}). Default is "gaussian".
 #' @param Falsediscovery The expected number of false discovery to be controlled. The larger it is, the higher threshold becomes. Default is c(1, 5, 10).
 #' @param plot.ylim A range of the y-axis. If NULL, automatic range in the y-axis will be provided. For plot.ylim=c(0,1), the y-axis has a range of 0 and 1.
-#' @param save.path A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. If then, sp.gwas is not going to generate the results but just loading the output files(.RData).
-#' @param lambda.min.quantile A range of lambda sequence. Default is 0.5 (median). If the range is so small that it can have many tied selection probabilities which is 1.
+#' @param save.path A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. Note that if there is an output RData file in "save.path", sp.gwas will just load the output files(.RData) in there, thereby not providing the results for new "genotype" and "phenotype".
+#' @param lambda.min.quantile A range of lambda sequence. Default is 0.5 (median). If the range is so small that it can have many tied selection probabilities which is 1. To handle with this problem, you should increase the value of "lambda.min.quantile".
 #' @param n.lambda The length of lambda sequence. The larger n.lambda, the more detailed lambda sequence will be.
 #' @param K	The number of iterations in resampling when calculating the selection probabilities.
 #' @param psub The subsampling proportion. For efficiency, default is 0.5.
@@ -43,31 +44,50 @@
 #' @author Kipoong Kim <kkp7700@gmail.com>
 
 #' @examples
-#' # Not run
-#' # sp.gwas(genotype.path = "./input.snp.csv",
-#' #         phenotype.path = "./input.phenotype.csv",
-#' #         input.type = c("path", "object")[1],
-#' #         save.path = "./Test",
-#' #         y.col=5:8,
-#' #         y.id.col=2,
-#' #         method="lasso",
-#' #         family="gaussian",
-#' #         Falsediscovery = c(1,5,10),
-#' #         plot.ylim = NULL,
-#' #         lambda.min.quantile = 0.5,
-#' #         n.lambda = 10,
-#' #         K = 100,
-#' #         psub = 0.5,
-#' #         manhattan.type = c("c", "r")[2],
-#' #         plot.name = "Test",
-#' #         plot.type = "jpg",
-#' #         plot.dpi = 300)
-#' #' A function
+#' genotype <- sp.gwas::genotype # load("genotype.rda")
+#' phenotype <- sp.gwas::phenotype # load("phenotype.rda")
+#' 
+#' sp.gwas(genotype = genotype, 
+#'         phenotype = phenotype, 
+#'         input.type = c("object", "path")[1], 
+#'         save.path = "./EXAMPLE",
+#'         y.id.col = 1, 
+#'         y.col = 2:4, 
+#'         normalization = FALSE, 
+#'         method="lasso",
+#'         family="gaussian",
+#'         Falsediscovery = c(1,5,10),
+#'         plot.ylim = NULL,
+#'         lambda.min.quantile = 0.5,
+#'         n.lambda = 10,
+#'         K = 100,
+#'         psub = 0.5,
+#'         manhattan.type = c("c", "r")[1],
+#'         plot.name = "Test",
+#'         plot.type = "jpg",
+#'         plot.dpi = 300)
+#' 
+#' results <- readxl::read_xlsx("./EXAMPLE/[2]sp.results.xlsx")
+#' class(results$chr) <- "numeric"
+#' class(results$pos) <- "numeric"
+#' thresholds <- readxl::read_xlsx("./EXAMPLE/[2]sp.thresholds.xlsx")
+#' highlight1 <- results$rs[results$v1>thresholds$v1[1]]
+#' highlight10 <- setdiff( results$rs[results$v1>thresholds$v1[3]], highlight1 )
+#' 
+#' jpeg("./EXAMPLE/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
+#' qqman_manhattan(results,
+#'                 chr="chr", bp="pos", snp="rs", p="v1", logp=FALSE, 
+#'                 suggestiveline = thresholds$v1[1],
+#'                 genomewideline = thresholds$v1[3],
+#'                 highlight = list(highlight1, highlight10),
+#'                 col.highlight = c("blue", "red"),
+#'                 ylab="Selection probabilities", ylim=c(0,1))
+#' dev.off()
 #'
 #'
 #' @return The dataframe with new mean and sum columns
 #' @import CMplot
-#' @import dplyr
+#' @importFrom dplyr %>%
 #' @import ggplot2
 #' @import glmnet
 #' @import utils
@@ -83,12 +103,13 @@
 #' @importFrom writexl write_xlsx
 #' @importFrom stats quantile
 #' @export sp.gwas
-sp.gwas <- function( genotype.path = NULL,
-                     phenotype.path = NULL,
+sp.gwas <- function( genotype = NULL,
+                     phenotype = NULL,
                      input.type = c("object", "path"),
                      save.path = "./sp.folder",
-                     y.col = 4,
-                     y.id.col = 2,
+                     y.col = 2,
+                     y.id.col = 1,
+                     normalization = TRUE,
                      method = "lasso",
                      family = "gaussian",
                      Falsediscovery = c(1,5,10),
@@ -110,12 +131,13 @@ sp.gwas <- function( genotype.path = NULL,
     }
 
     if( !file.exists( paste0(save.path,"/[1]Data",".RData") ) ){
-        myDATA <- import.hapmap(genotype.path=genotype.path,
-                                phenotype.path=phenotype.path,
+        myDATA <- import.hapmap(genotype=genotype,
+                                phenotype=phenotype,
                                 input.type=input.type,
                                 save.path=save.path,
                                 y.col=y.col,
                                 y.id.col=y.id.col,
+                                normalization=normalization,
                                 family=family)
     } else {
         print("The data file already exists.")
@@ -154,8 +176,8 @@ sp.gwas <- function( genotype.path = NULL,
     sink(file = paste0(save.path,"/[4]information.txt"))
     print(
         list(
-            genotype.path = genotype.path,
-            phenotype.path = phenotype.path,
+            genotype = genotype,
+            phenotype = phenotype,
             save.path = save.path,
             y.col = y.col,
             method = method,
@@ -171,7 +193,8 @@ sp.gwas <- function( genotype.path = NULL,
         )
     )
     sink()
-
+    
+    cat("\n", "The results are saved in ", getwd(), "\n")
 }
 
 

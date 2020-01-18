@@ -1,18 +1,3 @@
-#' @import CMplot
-#' @import dplyr
-#' @import ggplot2
-#' @import glmnet
-#' @import utils
-#' @importFrom bestNormalize boxcox
-#' @importFrom compiler cmpfun
-#' @importFrom data.table fread
-#' @importFrom gridExtra grid.arrange
-#' @importFrom gtools mixedorder
-#' @importFrom readxl read_xlsx
-#' @importFrom tidyr gather
-#' @importFrom tidyr spread
-#' @importFrom tidyr unite
-#' @importFrom writexl write_xlsx
 sp.manhattan <- function(sp.df,
                          threshold,
                          save.path,

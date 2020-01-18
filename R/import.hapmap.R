@@ -1,35 +1,20 @@
-#' @import CMplot
-#' @import dplyr
-#' @import ggplot2
-#' @import glmnet
-#' @import utils
-#' @importFrom bestNormalize boxcox
-#' @importFrom compiler cmpfun
-#' @importFrom data.table fread
-#' @importFrom gridExtra grid.arrange
-#' @importFrom gtools mixedorder
-#' @importFrom readxl read_xlsx
-#' @importFrom tidyr gather
-#' @importFrom tidyr spread
-#' @importFrom tidyr unite
-#' @importFrom writexl write_xlsx
-import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c("path", "object"), save.path, y.col=NULL, y.id.col=2, family="gaussian"){
+import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", "path"), save.path, y.col=NULL, y.id.col=2, family="gaussian", normalization=TRUE){
 
   # Import a phenotype data -------------------------------------------------
-  if( length( dim(phenotype.path) ) > 0 | input.type=="object" ){
-    myY.init <- phenotype.path
+  if( length( dim(phenotype) ) > 0 | input.type=="object" ){
+    myY.init <- phenotype
   } else {
-    if(is.null(phenotype.path)) {
+    if(is.null(phenotype)) {
       print("Select the path of phenotype data which has sample IDs in its first column.")
-      phenotype.path <- choose.files()
+      phenotype <- choose.files()
     }
     
-    if( grepl("*.xlsx", phenotype.path) ){
-      myY.init <- read_excel(phenotype.path)
-    } else if( grepl("*.csv|*.txt", phenotype.path) ){
-      myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
+    if( grepl("*.xlsx", phenotype) ){
+      myY.init <- read_excel(phenotype)
+    } else if( grepl("*.csv|*.txt", phenotype) ){
+      myY.init <- as.data.frame( fread(phenotype), stringsAsFactors=FALSE )
     } else {
-      myY.init <- as.data.frame( fread(phenotype.path), stringsAsFactors=FALSE )
+      myY.init <- as.data.frame( fread(phenotype), stringsAsFactors=FALSE )
     }
   }
   
@@ -59,20 +44,20 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
   
   
 # Import a genotype data --------------------------------------------------
-    if( length( dim(genotype.path) ) > 0 | input.type=="object" ){
-      myX.init <- genotype.path
+    if( length( dim(genotype) ) > 0 | input.type=="object" ){
+      myX.init <- genotype
     } else {
-      if(is.null(genotype.path)) {
+      if(is.null(genotype)) {
           print("Select genotype data with hapmap format.")
-          genotype.path <- choose.files()
+          genotype <- choose.files()
       }
   
-      if( grepl("*.xlsx", genotype.path) ){
-          myX.init <- read_excel(genotype.path, col_names=FALSE)
-      } else if( grepl("*.csv|*.txt", genotype.path) ){
-          myX.init <- as.data.frame( fread(genotype.path, header=FALSE), stringsAsFactors=FALSE )
+      if( grepl("*.xlsx", genotype) ){
+          myX.init <- read_excel(genotype, col_names=FALSE)
+      } else if( grepl("*.csv|*.txt", genotype) ){
+          myX.init <- as.data.frame( fread(genotype, header=FALSE), stringsAsFactors=FALSE )
       } else {
-        myX.init <- as.data.frame( fread(genotype.path, header=FALSE), stringsAsFactors=FALSE )
+        myX.init <- as.data.frame( fread(genotype, header=FALSE), stringsAsFactors=FALSE )
       } 
     }
   
@@ -168,17 +153,21 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
     # for( j in 1:(ncol(myY)-1) ){
     #   myY.original[,j+1] <- as.numeric(as.character(myY.original[,j+1]))
     # }
-    
-    for( j in 1:(ncol(myY)-1) ){
-      myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
+    if( normalization ){
+      for( j in 1:(ncol(myY)-1) ){
+        myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
+      }
+    } else {
+      myY <- myY.original
     }
-
+    
     norm.pvalue.original <- norm.pvalue <- NULL
     for( j in 1:(ncol(myY.original)-1) ){
         norm.pvalue.original[j] <- round( shapiro.test(myY.original[,j+1])$p.value, 4)
         norm.pvalue[j] <- round( shapiro.test(myY[,j+1])$p.value, 4)
     }
 
+    if( normalization ){
     Hist.y.original <- myY.original %>%
         .[,-1,drop=F] %>%
         gather(PHENOTYPE) %>%
@@ -191,7 +180,8 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
         facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
         geom_label(x=Inf, y=Inf, aes(label=pvalue),
                    vjust = "inward", hjust = "inward")
-
+    }
+    
     Hist.y <- myY %>%
         .[,-1,drop=FALSE] %>%
         gather(PHENOTYPE) %>%
@@ -204,11 +194,16 @@ import.hapmap <- function(genotype.path=NULL, phenotype.path=NULL, input.type=c(
         facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
         geom_label(x=Inf, y=Inf, aes(label=pvalue),
                    vjust = "inward", hjust = "inward")
-
-    Hist.norm <- grid.arrange(Hist.y.original, Hist.y, nrow=1, heights=15)
-
-    ggsave(Hist.norm, filename = paste0(save.path,"/[1]Hist.phenotype.norm.pdf"), width = 10, height = 5)
-
+    } else if (family!="gaussian"){
+      myY <- myY.original
+    }
+    
+    if( normalization ){
+      Hist.norm <- grid.arrange(Hist.y.original, Hist.y, nrow=1, heights=15)
+      ggsave(Hist.norm, filename = paste0(save.path,"/[1]Hist.phenotype.norm.pdf"), width = 10, height = 5)
+    } else {
+      Hist.norm <- grid.arrange(Hist.y, nrow=1, heights=15)
+      ggsave(Hist.norm, filename = paste0(save.path,"/[1]Hist.phenotype.norm.pdf"), width = 10, height = 5)
     }
     
     write.csv(x=myX, file=paste0(save.path,"/[1]myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
