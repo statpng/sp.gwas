@@ -8,7 +8,6 @@
 # Example code in package build process
 *-Ex.R
 example
-EXAMPLE_perm/
 
 # Output files from R CMD build
 /*.tar.gz
@@ -43,3 +42,5 @@ rsconnect/
 
 check/
 sp.folder/
+EXAMPLE/
+EXAMPLE_perm/
