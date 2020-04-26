@@ -8,7 +8,7 @@
 # Example code in package build process
 *-Ex.R
 example
-EXAMPLE_perm
+EXAMPLE_perm/
 
 # Output files from R CMD build
 /*.tar.gz
