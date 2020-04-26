@@ -1,7 +1,7 @@
 Package: sp.gwas
 Type: Package
 Title: Selection probabilities using glmnet for GWAS
-Version: 0.2.0
+Version: 1.0.0
 Author: Kipoong Kim
 Maintainer: Kipoong Kim <kkp7700@gmail.com>
 Description: Selection probabilities using generalized linear model with regularization for a SNP data in the hapmap format.

@@ -176,7 +176,7 @@ sp.gwas(genotype = genotype,
         plot.dpi = 300)
         
 # Manhattan plot for the first phenotype (Y1) with permuted threshold
-results <- read.csv("./EXAMPLE/[2]sp.results.csv")
+results <- read.csv("./EXAMPLE_perm/[2]sp.results.csv")
 class(results$chr) <- "numeric"
 class(results$pos) <- "numeric"
 thresholds <- read.csv("./EXAMPLE_perm/[2]sp.thresholds.csv")
