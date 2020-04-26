@@ -114,8 +114,8 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
     missing.snp <- apply( myX.init[-1,-(1:11)], 1, function(X) sum(is.na(X)) )
     missing.sample <- apply( myX.init[-1,-(1:11)], 2, function(X) sum(is.na(X)) )
 
-    write_xlsx(x=data.frame(ID=myX.init[-1,1], missing.snp, stringsAsFactors = FALSE), path=paste0(save.path,"/[0]missing.snp.xlsx"))
-    write_xlsx(x=data.frame(ID=as.character(myX.init[1,-(1:11)]), missing.sample, stringsAsFactors = FALSE), path=paste0(save.path,"/[0]missing.sample.xlsx"))
+    write.csv(x=data.frame(ID=myX.init[-1,1], missing.snp, stringsAsFactors = FALSE), file=paste0(save.path,"/[0]missing.snp.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=data.frame(ID=as.character(myX.init[1,-(1:11)]), missing.sample, stringsAsFactors = FALSE), file=paste0(save.path,"/[0]missing.sample.csv"), row.names=FALSE, fileEncoding = "UTF-8")
 
     # Saving Excel But its time is too long ----------------------------------
     # for( Excelobj in list(myX, myGD, myGM, myGT) ){
@@ -146,14 +146,14 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
     # myX[ss.x+11,][1:10,1:10]
     # myY[ss.y,][1:10,]
     if( family=="gaussian" ){
-    print("Performing the normalization for phenotypes, but there is no evidence that they can be normalized.")
 
-      
     myY.original <- myY
     # for( j in 1:(ncol(myY)-1) ){
     #   myY.original[,j+1] <- as.numeric(as.character(myY.original[,j+1]))
     # }
     if( normalization ){
+      print("Performing the normalization for phenotypes, but there is no evidence that they can be normalized.")
+      
       for( j in 1:(ncol(myY)-1) ){
         myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
       }
@@ -167,33 +167,48 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
         norm.pvalue[j] <- round( shapiro.test(myY[,j+1])$p.value, 4)
     }
 
-    if( normalization ){
-    Hist.y.original <- myY.original %>%
-        .[,-1,drop=F] %>%
-        gather(PHENOTYPE) %>%
-        data.frame(., pvalue=rep(norm.pvalue.original, each=nrow(.)/length(norm.pvalue.original))) %>%
-        ggplot(aes(value)) +
-        geom_histogram(fill="white", colour="black") +
-        xlab("Original Phenotypes") +
-        ggtitle(paste0("Histogram of original phenotypes")) +
-        theme_bw() +
-        facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
-        geom_label(x=Inf, y=Inf, aes(label=pvalue),
-                   vjust = "inward", hjust = "inward")
-    }
+      if( normalization ){
+        Hist.y.original <- myY.original %>%
+            .[,-1,drop=F] %>%
+            gather(PHENOTYPE) %>%
+            data.frame(., pvalue=rep(norm.pvalue.original, each=nrow(.)/length(norm.pvalue.original))) %>%
+            ggplot(aes(value)) +
+            geom_histogram(fill="white", colour="black") +
+            xlab("Original Phenotypes") +
+            ggtitle(paste0("Histogram of original phenotypes")) +
+            theme_bw() +
+            facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
+            geom_label(x=Inf, y=Inf, aes(label=pvalue),
+                       vjust = "inward", hjust = "inward")
+        
+        Hist.y <- myY %>%
+          .[,-1,drop=FALSE] %>%
+          gather(PHENOTYPE) %>%
+          data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
+          ggplot(aes(value)) +
+          geom_histogram(fill="white", colour="black") +
+          ggtitle(paste0("Histogram of transformed phenotypes")) +
+          theme_bw() +
+          facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
+          geom_label(x=Inf, y=Inf, aes(label=pvalue),
+                     vjust = "inward", hjust = "inward")
+      
+      } else {
+        Hist.y <- myY %>%
+          .[,-1,drop=FALSE] %>%
+          gather(PHENOTYPE) %>%
+          data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
+          ggplot(aes(value)) +
+          geom_histogram(fill="white", colour="black") +
+          ggtitle(paste0("Histogram of original phenotypes")) +
+          theme_bw() +
+          facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
+          geom_label(x=Inf, y=Inf, aes(label=pvalue),
+                     vjust = "inward", hjust = "inward")
+      }
     
-    Hist.y <- myY %>%
-        .[,-1,drop=FALSE] %>%
-        gather(PHENOTYPE) %>%
-        data.frame(., pvalue=rep(norm.pvalue, each=nrow(.)/length(norm.pvalue))) %>%
-        ggplot(aes(value)) +
-        geom_histogram(fill="white", colour="black") +
-        xlab("Transformed phenotypes") +
-        ggtitle(paste0("Histogram of transformed phenotypes")) +
-        theme_bw() +
-        facet_wrap(~PHENOTYPE, nrow=2, scales="free") +
-        geom_label(x=Inf, y=Inf, aes(label=pvalue),
-                   vjust = "inward", hjust = "inward")
+    
+    
     } else if (family!="gaussian"){
       myY <- myY.original
     }

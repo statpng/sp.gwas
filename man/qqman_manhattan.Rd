@@ -4,11 +4,23 @@
 \alias{qqman_manhattan}
 \title{Creates a manhattan plot}
 \usage{
-qqman_manhattan(x, chr = "CHR", bp = "BP", p = "P", snp = "SNP",
-  col = c("gray10", "gray60"), col.highlight = "green",
-  chrlabs = NULL, suggestiveline = -log10(1e-05),
-  genomewideline = -log10(5e-08), highlight = NULL, logp = TRUE,
-  annotatePval = NULL, annotateTop = TRUE, ...)
+qqman_manhattan(
+  x,
+  chr = "CHR",
+  bp = "BP",
+  p = "P",
+  snp = "SNP",
+  col = c("gray10", "gray60"),
+  col.highlight = "green",
+  chrlabs = NULL,
+  suggestiveline = -log10(1e-05),
+  genomewideline = -log10(5e-08),
+  highlight = NULL,
+  logp = TRUE,
+  annotatePval = NULL,
+  annotateTop = TRUE,
+  ...
+)
 }
 \arguments{
 \item{x}{A data.frame with columns "BP," "CHR," "P," and optionally, "SNP."}

@@ -6,7 +6,9 @@ sp.glmnet <- function(x, y,
                       lambda.min.quantile=0.5,
                       K=100,
                       psub=0.5,
-                      setseed, ...){
+                      setseed,
+                      verbose=TRUE,
+                      ...){
 
     if( NROW(y) != nrow(x) ) stop("x and y should be equal length of row")
     if( NCOL(y)>1 & (family!="mgaussian") ) stop("The family should be 'mgaussian'")
@@ -57,7 +59,9 @@ sp.glmnet <- function(x, y,
     out <- array(0, c(ncol(x), length(seq.lambda), length(seq.alpha)) );
     for( j in 1:length(seq.alpha) ){
         for( i in 1:K ){
-            if( i %% 10 == 0 ) print(paste0("iteration=", i, "  alpha=", seq.alpha[j]))
+            if( verbose ){
+                if( i %% 10 == 0 ) print(paste0("iteration=", i, "  alpha=", seq.alpha[j]))
+            }
 
             set.seed( setseed*i )
 

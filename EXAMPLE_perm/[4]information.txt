@@ -1,0 +1,63 @@
+$genotype
+[1] "genotype"
+
+$phenotype
+[1] "phenotype"
+
+$save.path
+[1] "./EXAMPLE_perm"
+
+$y.col
+[1] 2
+
+$y.id.col
+[1] 1
+
+$normalization
+[1] FALSE
+
+$method
+[1] "lasso"
+
+$family
+[1] "gaussian"
+
+$false.discovery
+[1]  1  5 10
+
+$permutation
+[1] TRUE
+
+$nperm
+[1] 10
+
+$setseed
+[1] 2020
+
+$plot.ylim
+NULL
+
+$lambda.min.quantile
+[1] 0.5
+
+$n.lambda
+[1] 10
+
+$K
+[1] 20
+
+$psub
+[1] 0.5
+
+$manhattan.type
+[1] "c"
+
+$plot.name
+[1] "Test_perm"
+
+$plot.type
+[1] "jpg"
+
+$plot.dpi
+[1] 300
+
