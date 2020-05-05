@@ -8,6 +8,9 @@ sp.gwas(
   genotype = NULL,
   phenotype = NULL,
   input.type = c("object", "path"),
+  HWE.range = c(0, 1),
+  heterozygosity.range = c(0, 1),
+  remove.missingY = TRUE,
   save.path = "./sp.folder",
   y.col = 2,
   y.id.col = 1,
@@ -35,6 +38,12 @@ sp.gwas(
 \item{phenotype}{Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.}
 
 \item{input.type}{Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".}
+
+\item{HWE.range}{A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).}
+
+\item{heterozygosity.range}{A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).}
+
+\item{remove.missingY}{If TRUE, the samples with missing values in phenotype data are removed. Accordingly, the corresponding genotype samples are also filtered out. Default is TRUE.}
 
 \item{save.path}{A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. Note that if there is an output RData file in "save.path", sp.gwas will just load the output files(.RData) in there, thereby not providing the results for new "genotype" and "phenotype".}
 
@@ -108,6 +117,9 @@ phenotype <- sp.gwas::phenotype # load("phenotype.rda")
 sp.gwas(genotype = genotype, 
         phenotype = phenotype, 
         input.type = c("object", "path")[1], 
+        HWE.range = c(0, 1),
+        heterozygosity.range = c(0, 1),
+        remove.missingY = TRUE,
         save.path = "./EXAMPLE",
         y.id.col = 1, 
         y.col = 2:4, 
@@ -155,6 +167,9 @@ dev.off()
 sp.gwas(genotype = genotype, 
         phenotype = phenotype, 
         input.type = c("object", "path")[1], 
+        HWE.range = c(0, 1),
+        heterozygosity.range = c(0, 1),
+        remove.missingY = TRUE,
         save.path = "./EXAMPLE_perm",
         y.id.col = 1, 
         y.col = 2, 

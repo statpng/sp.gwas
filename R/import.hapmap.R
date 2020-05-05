@@ -1,4 +1,16 @@
-import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", "path"), save.path, y.col=NULL, y.id.col=2, family="gaussian", normalization=TRUE){
+import.hapmap <-
+  function(genotype = NULL,
+           phenotype = NULL,
+           input.type = c("object", "path"),
+           save.path,
+           y.col = NULL,
+           y.id.col = 2,
+           family = "gaussian",
+           normalization = TRUE,
+           remove.missingY = TRUE,
+           HWE.range = c(0, 1),
+           heterozygosity.range = c(0, 1)) {
+    
 
   # Import a phenotype data -------------------------------------------------
   if( length( dim(phenotype) ) > 0 | input.type=="object" ){
@@ -21,7 +33,7 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
   
   # Restriction of the number of phenotypes ---------------------------------
   if( ncol(myY.init) > 5 & is.null(y.col) ){
-    stop("There are too many phenotypes. Choose 4 or less.")
+    stop("The number of phenotypes must be equal or less than 4.")
   } else if(ncol(myY.init) <= 5 & is.null(y.col)){
     myY.init <- myY.init[ , c(y.id.col, 1:(ncol(myY.init)-1)-1) ]
   } else if (!is.null(y.col)){
@@ -34,7 +46,7 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
     stop("There are duplicated sample IDs in phenotype data.")
   }
   
-  print("Checking whether class of phenotype corresponds to family")
+  print("Checking whether the class of phenotype corresponds to family")
   if( family == "gaussian" ){
     for( j in 1:(ncol(myY.init)-1) ){
       if( length( table( myY.init[,j+1] ) ) < 10 ) warning(paste0("The category of ", j, "-th phenotype is less than 5. Isn't it categorical variable?"))
@@ -77,13 +89,17 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
     myY.init <- myY.init[order( myY.init[, 1] ), ]
 
 
-# Remove missing values ---------------------------------------------------
-    print(paste0("Removing the missing values of phenotypes(",
-                 sum(apply(myY.init, 1, function(x) any(is.na(x)))),
-                 ")."
-                 ))
+# Remove missing values from Y ---------------------------------------------------
     
-    myY.init <- myY.init[!apply(myY.init, 1, function(x) any(is.na(x))), ]
+    if( remove.missingY ){
+      print(paste0("Removing the missing values of phenotypes(",
+                   sum(apply(myY.init, 1, function(x) any(is.na(x)))),
+                   ")."
+      ))
+      
+      myY.init <- myY.init[!apply(myY.init, 1, function(x) any(is.na(x))), ]
+    }
+
     
 # Match the genotype with the phenotype -----------------------------------
     print("Matcing procedure between genotpe and phenotype")
@@ -102,6 +118,56 @@ import.hapmap <- function(genotype=NULL, phenotype=NULL, input.type=c("object", 
     if( length(ss.x) < 10 ) stop("Check your sample IDs")
     if( length(ss.y) < 10 ) stop("Check your sample IDs")
     
+    
+    
+
+# Quality Control ---------------------------------------------------------
+    png.HWE <- function(genotype.hapmap){
+      
+      out <- NULL
+      pb <- txtProgressBar(min=0, max=nrow(genotype.hapmap[-1,]), style=3)
+      for( i in 1:nrow(genotype.hapmap[-1,])){
+        setTxtProgressBar(pb, i)
+        xi <- as.character(unlist(genotype.hapmap[-1,][i,-(1:11)]))
+        xiNA <- replace(xi, list = (xi %in% c("NN", "00", "--", "//", "++", "XX") ), NA)
+        input <- strsplit(xiNA,"")
+        input.genotype <- genotype( sapply( input, paste0, collapse="/") )
+        if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
+          out[i] <- HWE.exact(input.genotype)$p.value
+        } else {
+          out[i] <- 1
+        }
+      }
+      
+      out
+    }
+
+    pvalue.HWE <- png.HWE( myX.init )
+    
+    png.heterozygousCalls <- function(genotype.hapmap){
+      
+      set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
+      N <- nrow(genotype.hapmap[-1,])
+      
+      out <- NULL
+      pb <- txtProgressBar(min=0, max=N, style=3)
+      for( i in 1:N){
+        setTxtProgressBar(pb, i)
+        xi <- as.character(unlist(genotype.hapmap[-1,][i,-(1:11)]))
+        xina <- unlist( replace( xi, xi %in% c("NN", "00", "--", "//", "++", "XX"), NA ) )
+        out[i] <- mean( xina %in% set.heterozygote )
+      }
+      
+      out
+    }
+      
+    heterozygosity <- png.heterozygousCalls(myX.init)
+    
+    filter.HWE <- which( pvalue.HWE <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
+    filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
+    
+    myX.init <- myX.init[c(1, intersect(filter.HWE, filter.heterozygosity)+1), ]
+
 
 # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")

@@ -7,6 +7,9 @@
 #' @param genotype Either R object or file path can be considered. A genotype data is not a data.frame but a matrix with dimension \code{p} by \code{(n+11)}. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.
 #' @param phenotype Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
 #' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
+#' @param HWE.range A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).
+#' @param heterozygosity.range A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).
+#' @param remove.missingY If TRUE, the samples with missing values in phenotype data are removed. Accordingly, the corresponding genotype samples are also filtered out. Default is TRUE.
 #' @param y.col The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 2.
 #' @param y.id.col The column of sample ID in the phenotype data file. Default is 1.
 #' @param normalization If TRUE. phenotypes are converted to be normal-shape using box-cox transformation when all phenotypes are positive.
@@ -58,6 +61,9 @@
 #' sp.gwas(genotype = genotype, 
 #'         phenotype = phenotype, 
 #'         input.type = c("object", "path")[1], 
+#'         HWE.range = c(0, 1),
+#'         heterozygosity.range = c(0, 1),
+#'         remove.missingY = TRUE,
 #'         save.path = "./EXAMPLE",
 #'         y.id.col = 1, 
 #'         y.col = 2:4, 
@@ -105,6 +111,9 @@
 #' sp.gwas(genotype = genotype, 
 #'         phenotype = phenotype, 
 #'         input.type = c("object", "path")[1], 
+#'         HWE.range = c(0, 1),
+#'         heterozygosity.range = c(0, 1),
+#'         remove.missingY = TRUE,
 #'         save.path = "./EXAMPLE_perm",
 #'         y.id.col = 1, 
 #'         y.col = 2, 
@@ -153,6 +162,8 @@
 #' @import ggplot2
 #' @import glmnet
 #' @import utils
+#' @importFrom genetics HWE.exact
+#' @importFrom genetics genotype
 #' @importFrom bestNormalize boxcox
 #' @importFrom compiler cmpfun
 #' @importFrom data.table fread
@@ -168,6 +179,9 @@
 sp.gwas <- function( genotype = NULL,
                      phenotype = NULL,
                      input.type = c("object", "path"),
+                     HWE.range = c(0, 1),
+                     heterozygosity.range = c(0, 1),
+                     remove.missingY = TRUE,
                      save.path = "./sp.folder",
                      y.col = 2,
                      y.id.col = 1,
@@ -203,7 +217,11 @@ sp.gwas <- function( genotype = NULL,
                                 y.col=y.col,
                                 y.id.col=y.id.col,
                                 normalization=normalization,
-                                family=family)
+                                family=family,
+                                remove.missingY=remove.missingY, 
+                                HWE.range=HWE.range, 
+                                heterozygosity.range=heterozygosity.range
+                                )
     } else {
         print("The dataset file of genotype and phenotype already exists.")
         load(paste0(save.path,"/[1]Data",".RData"))
