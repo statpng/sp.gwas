@@ -8,6 +8,7 @@ import.hapmap <-
            family = "gaussian",
            normalization = TRUE,
            remove.missingY = TRUE,
+           maf.range = c(0, 1),
            HWE.range = c(0, 1),
            heterozygosity.range = c(0, 1)) {
     
@@ -122,6 +123,52 @@ import.hapmap <-
     
 
 # Quality Control ---------------------------------------------------------
+    png.maf <- function(genotype.hapmap, sep=""){
+      
+      # xx: vecor with c(GG, GC, CC, CC, CC)
+      # This function will return 1e-22 for the SNP with no minor allele
+      
+      out <- NULL
+      pb <- txtProgressBar(min=0, max=nrow(genotype.hapmap[-1,]), style=3)
+      for( i in 1:nrow(genotype.hapmap[-1,])){
+        setTxtProgressBar(pb, i)
+        xx <- as.character(unlist(genotype.hapmap[-1,-(1:11)][i,]))
+      
+        if(length(unique(xx))<=1) out[i] <- 0
+        
+        
+        xx <- ifelse(xx %in% c("NN", "00", "--", "//", "++", "XX"), NA, xx)
+        x.na <- xx[is.na(xx)]
+        x.value <- xx[!is.na(xx)]
+        
+        tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
+        maf <- min( prop.table(tb) )
+        
+        
+        if( FALSE ){
+          alleles <- names(tb)
+          major.allele <- alleles[which.max(tb)]
+          minor.allele <- alleles[ !alleles %in% major.allele ]
+          
+          if(length(minor.allele)==0){
+            return(0)
+          }
+          
+          combs <- unique( apply( expand.grid( alleles, alleles ), 1, function(x) paste0(sort(x), collapse=sep ) ) )
+          x.value <- sapply( x.value, function(xx) strsplit(as.character(xx), sep) %>% unlist %>% gtools::mixedsort() %>% paste0(collapse=sep) )
+          
+          tb <- table( factor( x.value, levels=combs ) )
+          ord.tb <- order( sapply( strsplit( names(tb), sep ), function(x) sum(x==minor.allele) ) )
+          tb.new <- tb[ord.tb]
+          
+          maf <- sum( tb.new[2] + 2*tb.new[3] ) / sum( 2*tb.new )
+        }
+        
+        out[i] <- maf
+      }
+      out
+    }
+    
     png.HWE <- function(genotype.hapmap){
       
       out <- NULL
@@ -142,8 +189,6 @@ import.hapmap <-
       out
     }
 
-    pvalue.HWE <- png.HWE( myX.init )
-    
     png.heterozygousCalls <- function(genotype.hapmap){
       
       set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
@@ -160,13 +205,25 @@ import.hapmap <-
       
       out
     }
-      
+    
+    print("Calculating MAF")
+    MAF <- png.maf( myX.init )
+    print("Calculating pvalue by HWE")
+    pvalue.HWE <- png.HWE( myX.init )
+    print("Calculating heterozygosity")
     heterozygosity <- png.heterozygousCalls(myX.init)
     
+    filter.MAF <- which( MAF <= max(maf.range) & MAF >= min(maf.range) )
     filter.HWE <- which( pvalue.HWE <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
     filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
     
-    myX.init <- myX.init[c(1, intersect(filter.HWE, filter.heterozygosity)+1), ]
+    filter.intersect <- intersect( intersect(filter.MAF, filter.HWE), filter.heterozygosity)
+    
+    MAF.final <- MAF[filter.intersect]
+    pvalue.HWE.final <- pvalue.HWE[filter.intersect]
+    heterozygosity.final <- heterozygosity[filter.intersect]
+    
+    myX.init <- myX.init[c(1, filter.intersect+1), ]
 
 
 # Numericalize the coding of genotypes ------------------------------------
@@ -295,6 +352,13 @@ import.hapmap <-
     write.csv(x=data.frame(ID=rownames(myGD), myGD, stringsAsFactors = FALSE), file=paste0(save.path,"/[1]myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGM, file=paste0(save.path,"/[1]myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGT, file=paste0(save.path,"/[1]myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    
+    write.csv(x=cbind.data.frame(myGM[-1,], 
+                                 MAF=MAF.final,
+                                 pvalue_HWE=pvalue.HWE.final,
+                                 heterozygosity=heterozygosity.final), 
+              file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    
     
     if(family=="gaussian"){
       myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
