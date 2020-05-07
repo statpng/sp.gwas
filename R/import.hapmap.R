@@ -13,6 +13,14 @@ import.hapmap <-
            HWE.range = c(0, 1),
            heterozygosity.range = c(0, 1)) {
     
+    
+    if( any( class(genotype) %in% c("tbl", "tbl_df") ) ){
+      genotype <- as.data.frame(genotype)
+    }
+    
+    if( any( class(phenotype) %in% c("tbl", "tbl_df") ) ){
+      phenotype <- as.data.frame(phenotype)
+    }
 
   # Import a phenotype data -------------------------------------------------
   if( length( dim(phenotype) ) > 0 | input.type=="object" ){
