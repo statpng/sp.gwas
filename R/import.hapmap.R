@@ -1,3 +1,4 @@
+#' @export import.hapmap
 import.hapmap <-
   function(genotype = NULL,
            phenotype = NULL,
@@ -17,11 +18,10 @@ import.hapmap <-
   if( length( dim(phenotype) ) > 0 | input.type=="object" ){
     myY.init <- phenotype
   } else {
-    if(is.null(phenotype)) {
-      print("Select the path of phenotype data which has sample IDs in its first column.")
-      phenotype <- choose.files()
-    }
-    
+    # if(is.null(phenotype)) {
+    #   print("Select the path of phenotype data which has sample IDs in its first column.")
+    #   phenotype <- choose.files()
+    # }
     if( grepl("*.xlsx", phenotype) ){
       myY.init <- read_excel(phenotype)
     } else if( grepl("*.csv|*.txt", phenotype) ){
@@ -35,15 +35,13 @@ import.hapmap <-
   # Restriction of the number of phenotypes ---------------------------------
   if( ncol(myY.init) > 5 & is.null(y.col) ){
     stop("The number of phenotypes must be equal or less than 4.")
-  } else if(ncol(myY.init) <= 5 & is.null(y.col)){
-    myY.init <- myY.init[ , c(y.id.col, 1:(ncol(myY.init)-1)-1) ]
   } else if (!is.null(y.col)){
     myY.init <- myY.init[,c(y.id.col, y.col)]
   }
   # myY.init <- myY.init[!duplicated(myY.init[,y.id.col]),]
   
-  if( any(duplicated(myY.init[,y.id.col])) ){
-    cat( "Duplicated phenotype IDs: {", myY.init[,y.id.col][ duplicated(myY.init[,y.id.col]) ], "}\n" )
+  if( any(duplicated(myY.init[,1])) ){
+    cat( "Duplicated phenotype IDs: {", myY.init[,1][ duplicated(myY.init[,1]) ], "}\n" )
     stop("There are duplicated sample IDs in phenotype data.")
   }
   
@@ -54,6 +52,8 @@ import.hapmap <-
       if( class( myY.init[,j+1] ) != "numeric" ) stop("Please confirm classes of your phenotypes.")
     }
   }
+  
+    
   
   
 # Import a genotype data --------------------------------------------------
