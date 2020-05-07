@@ -231,7 +231,7 @@ import.hapmap <-
     heterozygosity <- png.heterozygousCalls(myX.init)
     
     filter.MAF <- which( MAF <= max(maf.range) & MAF >= min(maf.range) )
-    filter.HWE <- which( pvalue.HWE <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
+    filter.HWE <- which( sapply(pvalue.HWE, function(xx) min(xx, 1)) <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
     filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
     
     filter.intersect <- intersect( intersect(filter.MAF, filter.HWE), filter.heterozygosity)
@@ -249,11 +249,12 @@ import.hapmap <-
               file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
                                   
-    myX.init <- myX.init[c(1, filter.intersect+1), ]
+    
     
     
                                   
-                                  
+    # myX.init <- myX.init[c(1, filter.intersect+1), ]
+    
     # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
@@ -377,6 +378,12 @@ import.hapmap <-
     write.csv(x=data.frame(ID=rownames(myGD), myGD, stringsAsFactors = FALSE), file=paste0(save.path,"/[1]myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGM, file=paste0(save.path,"/[1]myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGT, file=paste0(save.path,"/[1]myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    
+    
+    write.csv(x=myX[c(1,1+filter.intersect),], file=paste0(save.path,"/[1]QC_myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=data.frame(ID=rownames(myGD), myGD[,filter.intersect], stringsAsFactors = FALSE), file=paste0(save.path,"/[1]QC_myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=myGM[c(1, 1+filter.intersect),], file=paste0(save.path,"/[1]QC_myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    write.csv(x=myGT[c(1, 1+filter.intersect),], file=paste0(save.path,"/[1]QC_myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
     
     if(family=="gaussian"){
