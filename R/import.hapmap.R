@@ -14,6 +14,10 @@ import.hapmap <-
            heterozygosity.range = c(0, 1)) {
     
     
+    if( !file.exists( paste0(save.path) ) ){
+      dir.create(paste0(save.path))
+    }
+    
     if( any( class(genotype) %in% c("tbl", "tbl_df") ) ){
       genotype <- as.data.frame(genotype)
     }
@@ -150,7 +154,12 @@ import.hapmap <-
         x.value <- xx[!is.na(xx)]
         
         tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
-        maf <- min( prop.table(tb) )
+        if( length(tb) == 1 ){
+          maf <- 0
+        } else {
+          maf <- min( prop.table(tb) )
+        }
+        
         
         
         if( FALSE ){
@@ -231,9 +240,20 @@ import.hapmap <-
     pvalue.HWE.final <- pvalue.HWE[filter.intersect]
     heterozygosity.final <- heterozygosity[filter.intersect]
     
+                                  
+                                  
+    write.csv(x=cbind.data.frame(myX.init[-1,1:4], 
+                                 MAF=MAF,
+                                 pvalue_HWE=pvalue.HWE,
+                                 heterozygosity=heterozygosity), 
+              file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    
+                                  
     myX.init <- myX.init[c(1, filter.intersect+1), ]
     
     
+                                  
+                                  
     # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
@@ -357,12 +377,6 @@ import.hapmap <-
     write.csv(x=data.frame(ID=rownames(myGD), myGD, stringsAsFactors = FALSE), file=paste0(save.path,"/[1]myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGM, file=paste0(save.path,"/[1]myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGT, file=paste0(save.path,"/[1]myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
-    
-    write.csv(x=cbind.data.frame(myGM[-1,], 
-                                 MAF=MAF.final,
-                                 pvalue_HWE=pvalue.HWE.final,
-                                 heterozygosity=heterozygosity.final), 
-              file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
     
     if(family=="gaussian"){
