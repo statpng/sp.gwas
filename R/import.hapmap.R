@@ -1,3 +1,4 @@
+#' @import pbapply
 #' @export import.hapmap
 import.hapmap <-
   function(genotype = NULL,
@@ -140,18 +141,16 @@ import.hapmap <-
       # xx: vecor with c(GG, GC, CC, CC, CC)
       # This function will return 1e-22 for the SNP with no minor allele
       
-      out <- NULL
-      pb <- txtProgressBar(min=0, max=nrow(genotype.hapmap[-1,]), style=3)
-      for( i in 1:nrow(genotype.hapmap[-1,])){
-        setTxtProgressBar(pb, i)
-        xx <- as.character(unlist(genotype.hapmap[-1,-(1:11)][i,]))
+      
+      get.maf <- function(xj){
+        xj <- as.character(xj)
         
-        if(length(unique(xx))<=1) out[i] <- 0
+        if(length(unique(xj))<=1) maf <- 0
         
         
-        xx <- ifelse(xx %in% c("NN", "00", "--", "//", "++", "XX"), NA, xx)
-        x.na <- xx[is.na(xx)]
-        x.value <- xx[!is.na(xx)]
+        xj <- ifelse(xj %in% c("NN", "00", "--", "//", "++", "XX"), NA, xj)
+        x.na <- xj[is.na(xj)]
+        x.value <- xj[!is.na(xj)]
         
         tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
         if( length(tb) == 1 ){
@@ -159,66 +158,59 @@ import.hapmap <-
         } else {
           maf <- min( prop.table(tb) )
         }
-        
-        
-        
-        if( FALSE ){
-          alleles <- names(tb)
-          major.allele <- alleles[which.max(tb)]
-          minor.allele <- alleles[ !alleles %in% major.allele ]
-          
-          if(length(minor.allele)==0){
-            return(0)
-          }
-          
-          combs <- unique( apply( expand.grid( alleles, alleles ), 1, function(x) paste0(sort(x), collapse=sep ) ) )
-          x.value <- sapply( x.value, function(xx) strsplit(as.character(xx), sep) %>% unlist %>% gtools::mixedsort() %>% paste0(collapse=sep) )
-          
-          tb <- table( factor( x.value, levels=combs ) )
-          ord.tb <- order( sapply( strsplit( names(tb), sep ), function(x) sum(x==minor.allele) ) )
-          tb.new <- tb[ord.tb]
-          
-          maf <- sum( tb.new[2] + 2*tb.new[3] ) / sum( 2*tb.new )
-        }
-        
-        out[i] <- maf
+        maf
       }
+      
+      out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.maf(xj) )
+
       out
     }
     
     png.HWE <- function(genotype.hapmap){
       
-      out <- NULL
-      pb <- txtProgressBar(min=0, max=nrow(genotype.hapmap[-1,]), style=3)
-      for( i in 1:nrow(genotype.hapmap[-1,])){
-        setTxtProgressBar(pb, i)
-        xi <- as.character(unlist(genotype.hapmap[-1,][i,-(1:11)]))
-        xiNA <- replace(xi, list = (xi %in% c("NN", "00", "--", "//", "++", "XX") ), NA)
-        input <- strsplit(xiNA,"")
+      get.HWE <- function(xj){
+        xj <- as.character(xj)
+        xjNA <- replace(xj, list = (xj %in% c("NN", "00", "--", "//", "++", "XX") ), NA)
+        input <- strsplit(xjNA,"")
         input.genotype <- genotype( sapply( input, paste0, collapse="/") )
         if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
-          out[i] <- HWE.exact(input.genotype)$p.value
+          out <- HWE.exact(input.genotype)$p.value
         } else {
-          out[i] <- 1
+          out <- 1
         }
       }
+      
+      
+      out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.HWE(xj) )
+      
+      # out <- NULL
+      # pb <- txtProgressBar(min=0, max=nrow(genotype.hapmap[-1,]), style=3)
+      # for( i in 1:nrow(genotype.hapmap[-1,])){
+      #   setTxtProgressBar(pb, i)
+      #   xi <- as.character(unlist(genotype.hapmap[-1,][i,-(1:11)]))
+      #   xiNA <- replace(xi, list = (xi %in% c("NN", "00", "--", "//", "++", "XX") ), NA)
+      #   input <- strsplit(xiNA,"")
+      #   input.genotype <- genotype( sapply( input, paste0, collapse="/") )
+      #   if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
+      #     out[i] <- HWE.exact(input.genotype)$p.value
+      #   } else {
+      #     out[i] <- 1
+      #   }
+      # }
       
       out
     }
     
     png.heterozygousCalls <- function(genotype.hapmap){
       
-      set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
-      N <- nrow(genotype.hapmap[-1,])
-      
-      out <- NULL
-      pb <- txtProgressBar(min=0, max=N, style=3)
-      for( i in 1:N){
-        setTxtProgressBar(pb, i)
-        xi <- as.character(unlist(genotype.hapmap[-1,][i,-(1:11)]))
-        xina <- unlist( replace( xi, xi %in% c("NN", "00", "--", "//", "++", "XX"), NA ) )
-        out[i] <- mean( xina %in% set.heterozygote )
+      get.heterozygousCalls <- function(xj){
+        set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
+        xj <- as.character(xj)
+        xjna <- unlist( replace( xj, xj %in% c("NN", "00", "--", "//", "++", "XX"), NA ) )
+        out <- mean( xjna %in% set.heterozygote )
       }
+      
+      out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.heterozygousCalls(xj) )
       
       out
     }
@@ -240,19 +232,19 @@ import.hapmap <-
     pvalue.HWE.final <- pvalue.HWE[filter.intersect]
     heterozygosity.final <- heterozygosity[filter.intersect]
     
-                                  
-                                  
+    
+    
     write.csv(x=cbind.data.frame(myX.init[-1,1:4], 
                                  MAF=MAF,
                                  pvalue_HWE=pvalue.HWE,
                                  heterozygosity=heterozygosity), 
               file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
-                                  
     
     
     
-                                  
+    
+    
     # myX.init <- myX.init[c(1, filter.intersect+1), ]
     
     # Numericalize the coding of genotypes ------------------------------------
