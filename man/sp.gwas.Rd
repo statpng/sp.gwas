@@ -8,6 +8,9 @@ sp.gwas(
   genotype = NULL,
   phenotype = NULL,
   input.type = c("object", "path"),
+  imputation = FALSE,
+  QC = TRUE,
+  callrate.range = c(0, 1),
   maf.range = c(0, 1),
   HWE.range = c(0, 1),
   heterozygosity.range = c(0, 1),
@@ -39,6 +42,8 @@ sp.gwas(
 \item{phenotype}{Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.}
 
 \item{input.type}{Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".}
+
+\item{QC}{TRUE or FALSE for whether QC will be conducted.}
 
 \item{maf.range}{A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).}
 
@@ -120,6 +125,8 @@ phenotype <- sp.gwas::phenotype # load("phenotype.rda")
 sp.gwas(genotype = genotype, 
         phenotype = phenotype, 
         input.type = c("object", "path")[1], 
+        QC = TRUE,
+        callrate.range = c(0.95, 1),
         maf.range = c(1e-3, 1),
         HWE.range = c(0, 1),
         heterozygosity.range = c(0, 1),

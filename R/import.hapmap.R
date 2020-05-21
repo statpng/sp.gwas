@@ -1,3 +1,4 @@
+#' @import HardyWeinberg
 #' @import pbapply
 #' @export import.hapmap
 import.hapmap <-
@@ -10,9 +11,32 @@ import.hapmap <-
            family = "gaussian",
            normalization = TRUE,
            remove.missingY = TRUE,
+           imputation = FALSE,
+           QC = TRUE, 
+           callrate.range = c(0, 1),
            maf.range = c(0, 1),
            HWE.range = c(0, 1),
            heterozygosity.range = c(0, 1)) {
+    
+    # genotype.xlsx <- readxl::read_excel("./EXAMPLE/NEW_Genotype20190708.xlsx")
+    # genotype.list <- R.utils::loadToEnv("./EXAMPLE/[data]TOTAL_GLOBAL_KOREA_final.RData")
+    # phenotype.list <- R.utils::loadToEnv("./EXAMPLE/[data]PHENOTYPE_final.RData")
+    # genotype <- genotype.xlsx
+    # genotype <- genotype.list$TOTAL_final
+    # phenotype <- phenotype.list$PHENOTYPE2018
+    # class(phenotype$FloweringDate) <- "numeric"
+    # input.type = "object"
+    # save.path <- "EXAMPLE_gapit"
+    # y.col = 7
+    # y.id.col = 1
+    # family = "gaussian"
+    # normalization = TRUE
+    # remove.missingY = F
+    # QC = TRUE
+    # callrate.range = c(0.95, 1)
+    # maf.range = c(0, 1)
+    # HWE.range = c(0, 1)
+    # heterozygosity.range = c(0, 1)
     
     
     if( !file.exists( paste0(save.path) ) ){
@@ -114,6 +138,7 @@ import.hapmap <-
       myY.init <- myY.init[!apply(myY.init, 1, function(x) any(is.na(x))), ]
     }
     
+    # myX.init[,c(1:11, order( myX.init[1, 12:ncol(myX.init) ] )+11)] %>% filter(rs %in% c("rs_1_0006", "rs_2_48660")) %>% .[,1:20]
     
     # Match the genotype with the phenotype -----------------------------------
     print("Matcing procedure between genotpe and phenotype")
@@ -133,7 +158,7 @@ import.hapmap <-
     if( length(ss.y) < 10 ) stop("Check your sample IDs")
     
     
-    
+    if(QC){
     
     # Quality Control ---------------------------------------------------------
     png.maf <- function(genotype.hapmap, sep=""){
@@ -147,18 +172,19 @@ import.hapmap <-
         
         if(length(unique(xj))<=1) maf <- 0
         
-        
-        xj <- ifelse(xj %in% c("NN", "00", "--", "//", "++", "XX"), NA, xj)
+        NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
+        xj <- ifelse(xj %in% NonGenotype, NA, xj)
         x.na <- xj[is.na(xj)]
         x.value <- xj[!is.na(xj)]
         
-        tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
-        if( length(tb) == 1 ){
-          maf <- 0
-        } else {
+        if(length(x.value)>1){
+          tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
           maf <- min( prop.table(tb) )
+        } else {
+          maf <- 0
         }
-        maf
+        
+        ifelse( maf>0.5, 1-maf, maf )
       }
       
       out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.maf(xj) )
@@ -166,48 +192,87 @@ import.hapmap <-
       out
     }
     
+    
+    
+    
+    
     png.HWE <- function(genotype.hapmap){
       
       get.HWE <- function(xj){
         xj <- as.character(xj)
-        xjNA <- replace(xj, list = (xj %in% c("NN", "00", "--", "//", "++", "XX") ), NA)
+        xjNA <- replace(xj, list = (xj %in% NonGenotype ), NA)
+        if( length(table(xjNA)) == 1 ) return("NA")
         input <- strsplit(xjNA,"")
+        if( all(is.na(unlist(input))) ) return("NA")
+        
         input.genotype <- genotype( sapply( input, paste0, collapse="/") )
         if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
           out <- HWE.exact(input.genotype)$p.value
         } else {
-          out <- 1
+          out <- "NA"
         }
+        out
+      }
+      
+      png.get_allele.mat <- function(genotype.hapmap){
+        allele.mat <- 
+          genotype.hapmap[-1,-(1:11)] %>% 
+          apply(1, function(xj) {
+            allels.vec <- unlist( strsplit(names(table(ifelse(xj %in% NonGenotype, NA, xj))), "") ) %>% unique
+            alleles <- allels.vec %>% paste0(collapse="/") 
+            if( length(allels.vec) == 1 ){
+              alleles <- paste0(c(alleles,"X"), collapse="/")
+            }
+            alleles
+            # if( length(alleles) == 1 ){
+            #   expand.grid(unlist(strsplit(alleles, "/")), unlist(strsplit(alleles, "/"))) %>% 
+            #     apply(1, function(x) paste0(sort(x),collapse="")) %>% unique
+            # }
+            })
+        allele.mat
       }
       
       
-      out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.HWE(xj) )
+      png.get_allele <- function(xj){
+        allels.vec <- unlist( strsplit(names(table(ifelse(xj %in% NonGenotype, NA, xj))), "") ) %>% unique
+        alleles <- allels.vec %>% paste0(collapse="/") 
+        if( length(allels.vec) == 1 ){
+          alleles <- paste0(c(alleles,"X"), collapse="/")
+        }
+        alleles
+      }
       
-      # out <- NULL
-      # pb <- txtProgressBar(min=0, max=nrow(genotype.hapmap[-1,]), style=3)
-      # for( i in 1:nrow(genotype.hapmap[-1,])){
-      #   setTxtProgressBar(pb, i)
-      #   xi <- as.character(unlist(genotype.hapmap[-1,][i,-(1:11)]))
-      #   xiNA <- replace(xi, list = (xi %in% c("NN", "00", "--", "//", "++", "XX") ), NA)
-      #   input <- strsplit(xiNA,"")
-      #   input.genotype <- genotype( sapply( input, paste0, collapse="/") )
-      #   if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
-      #     out[i] <- HWE.exact(input.genotype)$p.value
-      #   } else {
-      #     out[i] <- 1
-      #   }
-      # }
+      # system.time({
+      #   hwe.mat <- genotype.hapmap
+      #   allele.vec <- png.get_allele.mat(hwe.mat)
+      #   genotype.x.na.mat <- pbapply(hwe.mat[-1,-(1:11)], 2, function(xj) ifelse(xj %in% c("NN", "00", "--", "//", "++", "XX"), NA, xj) %>% unlist )
+      #   out <- MakeCounts(t(genotype.x.na.mat), allele.vec)[,1:3] %>% HWExactMat(verbose=F) %>% .$pvalvec
+      # })
+
+      out <- pbapply(genotype.hapmap[-1,-(1:11)], 1, function(xj) {
+        xj.na <- ifelse(xj %in% NonGenotype, NA, xj) %>% unlist
+        if( all(is.na(xj.na)) | length(unique(xj.na))==1 ) return(0)
+        suppressWarnings( MakeCounts(xj.na, png.get_allele(xj.na))[1:3] %>% HWExact(verbose=F) %>% .$pval %>% as.numeric )
+      })
+      
+      # out <- pbapply( genotype.hapmap[-1,][,-(1:11)][1:20,], 1, function(xj) get.HWE(xj) )
       
       out
     }
+    
+    
+    
+    
     
     png.heterozygousCalls <- function(genotype.hapmap){
       
       get.heterozygousCalls <- function(xj){
         set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
         xj <- as.character(xj)
-        xjna <- unlist( replace( xj, xj %in% c("NN", "00", "--", "//", "++", "XX"), NA ) )
+        xjna <- unlist( replace( xj, xj %in% NonGenotype, NA ) )
+        if( all(is.na(xjna)) ) return("NA")
         out <- mean( xjna %in% set.heterozygote )
+        out
       }
       
       out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.heterozygousCalls(xj) )
@@ -215,6 +280,22 @@ import.hapmap <-
       out
     }
     
+    
+    print("Removing the SNPs with only one genotype or missing genotype in all samples")
+    wh.allmissing <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
+      all( unique(xj) %in% NonGenotype )
+    } )
+    # myX.init <- myX.init[c(1, which(!wh.allmissing)+1),]
+    print("Removing the SNPs with only one value")
+    wh.onevalue <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
+      ( length(unique(xj)) == 1 )
+    } )
+    # myX.init <- myX.init[c(1, which(!wh.onevalue)+1),]
+    print("Calculating call rate (the % of samples with a non-missing genotype")
+    CallRate <- myX.init[-1,-(1:11)] %>% pbapply(1, function(xj){
+      xjna <- unlist( replace( xj, xj %in% NonGenotype, NA ) )
+      (length(xjna)-sum(is.na(xjna)))/length(xjna)
+    })
     print("Calculating MAF")
     MAF <- png.maf( myX.init )
     print("Calculating pvalue by HWE")
@@ -222,30 +303,36 @@ import.hapmap <-
     print("Calculating heterozygosity")
     heterozygosity <- png.heterozygousCalls(myX.init)
     
+    filter.allmissing <- which( !wh.allmissing )
+    filter.onevalue <- which( !wh.onevalue )
+    filter.CallRate <- which( CallRate <= mac(callrate.range) & CallRate >= min(callrate.range) )
     filter.MAF <- which( MAF <= max(maf.range) & MAF >= min(maf.range) )
     filter.HWE <- which( sapply(pvalue.HWE, function(xx) min(xx, 1)) <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
     filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
     
-    filter.intersect <- intersect( intersect(filter.MAF, filter.HWE), filter.heterozygosity)
+    filter.intersect <- intersect( intersect( intersect(filter.CallRate, filter.MAF), filter.HWE), filter.heterozygosity)
     
-    MAF.final <- MAF[filter.intersect]
-    pvalue.HWE.final <- pvalue.HWE[filter.intersect]
-    heterozygosity.final <- heterozygosity[filter.intersect]
+    # CallRate.final <- CallRate[filter.intersect]
+    # MAF.final <- MAF[filter.intersect]
+    # pvalue.HWE.final <- pvalue.HWE[filter.intersect]
+    # heterozygosity.final <- heterozygosity[filter.intersect]
     
     
     
     write.csv(x=cbind.data.frame(myX.init[-1,1:4], 
+                                 CallRate=CallRate,
                                  MAF=MAF,
                                  pvalue_HWE=pvalue.HWE,
                                  heterozygosity=heterozygosity), 
               file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
     
-    
+    }
     
     
     
     # myX.init <- myX.init[c(1, filter.intersect+1), ]
+    
     
     # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
@@ -362,6 +449,30 @@ import.hapmap <-
     }
     
     
+    
+    print("Imputation")
+    if(imputation){
+      myX.impute <- myX
+      set.seed(2020)
+      myX.impute[-1,-(1:11)] <- 
+        pbapply::pbapply(myX[-1,-(1:11)], 1, function(xj){
+          as.character(unlist(xj)) %>% png.impute.snp
+        }) %>% t
+      
+      myGD.impute <- suppressWarnings( as.data.frame( apply(myX.impute[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="None", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
+      myGT.impute <- myX.impute[,c(12:ncol(myX.impute))]
+      
+      colnames(myGD.impute) <- myX.impute[-1,1]
+      rownames(myGD.impute) <- myX.impute[1,-c(1:11)]
+      
+      write.csv(x=myX.impute, file=paste0(save.path,"/[1]Impute_myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      write.csv(x=data.frame(ID=rownames(myGD.impute), myGD.impute, stringsAsFactors = FALSE), file=paste0(save.path,"/[1]Impute_myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      write.csv(x=myGM, file=paste0(save.path,"/[1]Impute_myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      write.csv(x=myGT.impute, file=paste0(save.path,"/[1]Impute_myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+
+    }
+    
+    
     write.csv(x=myX, file=paste0(save.path,"/[1]myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     if(family=="gaussian"){
       write.csv(x=myY.original, file=paste0(save.path,"/[1]myY.original.csv"), row.names=FALSE, fileEncoding = "UTF-8")
@@ -371,17 +482,55 @@ import.hapmap <-
     write.csv(x=myGM, file=paste0(save.path,"/[1]myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGT, file=paste0(save.path,"/[1]myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
-    
+    if(QC){
     write.csv(x=myX[c(1,1+filter.intersect),], file=paste0(save.path,"/[1]QC_myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=data.frame(ID=rownames(myGD), myGD[,filter.intersect], stringsAsFactors = FALSE), file=paste0(save.path,"/[1]QC_myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGM[c(1, 1+filter.intersect),], file=paste0(save.path,"/[1]QC_myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=myGT[c(1, 1+filter.intersect),], file=paste0(save.path,"/[1]QC_myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    }
     
+    if(QC & imputation){
+      write.csv(x=myX.impute[c(1,1+filter.intersect),], file=paste0(save.path,"/[1]ImputeQC_myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      write.csv(x=data.frame(ID=rownames(myGD.impute), myGD.impute[,filter.intersect], stringsAsFactors = FALSE), file=paste0(save.path,"/[1]ImputeQC_myGD.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      write.csv(x=myGM[c(1, 1+filter.intersect),], file=paste0(save.path,"/[1]ImputeQC_myGM.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      write.csv(x=myGT.impute[c(1, 1+filter.intersect),], file=paste0(save.path,"/[1]ImputeQC_myGT.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+    }
+    
+ 
     
     if(family=="gaussian"){
-      myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
+      myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)
+      # myDATA.QC <- list(myX=myX[c(1,1+filter.intersect),], 
+      #                   myY.original=myY.original, 
+      #                   myY=myY, 
+      #                   myGD=myGD[,filter.intersect], 
+      #                   myGM=myGM[c(1,1+filter.intersect),], 
+      #                   myGT=myGT[c(1,1+filter.intersect),])
+      # myDATA.impute <- list(myX=myX.impute, myY.original=myY.original, myY=myY, myGD=myGD.impute, myGM=myGM, myGT=myGT.impute)  
+      # myDATA.imputeQC <- list(myX=myX.impute[c(1,1+filter.intersect),], 
+      #                   myY.original=myY.original, 
+      #                   myY=myY, 
+      #                   myGD=myGD.impute[,filter.intersect], 
+      #                   myGM=myGM[c(1,1+filter.intersect),], 
+      #                   myGT=myGT.impute[c(1,1+filter.intersect),])
     } else {
       myDATA <- list(myX=myX, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
+      # myDATA.QC <- list(myX=myX[c(1,1+filter.intersect),], 
+      #                   myY=myY, 
+      #                   myGD=myGD[,filter.intersect], 
+      #                   myGM=myGM[c(1,1+filter.intersect),], 
+      #                   myGT=myGT[c(1,1+filter.intersect),])
+      # myDATA.impute <- list(myX = myX.impute,
+      #                       myY = myY,
+      #                       myGD = myGD.impute,
+      #                       myGM = myGM,
+      #                       myGT = myGT.impute
+      #                     )
+      # myDATA.imputeQC <- list(myX=myX.impute[c(1,1+filter.intersect),], 
+      #                         myY=myY, 
+      #                         myGD=myGD.impute[,filter.intersect], 
+      #                         myGM=myGM[c(1,1+filter.intersect),], 
+      #                         myGT=myGT.impute[c(1,1+filter.intersect),])
     }
     
     

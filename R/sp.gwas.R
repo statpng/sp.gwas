@@ -7,6 +7,7 @@
 #' @param genotype Either R object or file path can be considered. A genotype data is not a data.frame but a matrix with dimension \code{p} by \code{(n+11)}. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.
 #' @param phenotype Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
 #' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
+#' @param QC TRUE or FALSE for whether QC will be conducted.
 #' @param maf.range A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).
 #' @param HWE.range A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).
 #' @param heterozygosity.range A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).
@@ -64,6 +65,8 @@
 #' sp.gwas(genotype = genotype, 
 #'         phenotype = phenotype, 
 #'         input.type = c("object", "path")[1], 
+#'         QC = TRUE,
+#'         callrate.range = c(0.95, 1),
 #'         maf.range = c(1e-3, 1),
 #'         HWE.range = c(0, 1),
 #'         heterozygosity.range = c(0, 1),
@@ -184,6 +187,9 @@
 sp.gwas <- function( genotype = NULL,
                      phenotype = NULL,
                      input.type = c("object", "path"),
+                     imputation = FALSE,
+                     QC = TRUE,
+                     callrate.range = c(0, 1),
                      maf.range = c(0, 1),
                      HWE.range = c(0, 1),
                      heterozygosity.range = c(0, 1),
@@ -219,6 +225,8 @@ sp.gwas <- function( genotype = NULL,
         myDATA <- import.hapmap(genotype=genotype,
                                 phenotype=phenotype,
                                 input.type=input.type,
+                                imputation=imputation,
+                                QC = QC,
                                 maf.range = maf.range,
                                 remove.missingY=remove.missingY, 
                                 HWE.range=HWE.range, 
