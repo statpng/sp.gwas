@@ -37,7 +37,7 @@ import.hapmap <-
     # maf.range = c(0, 1)
     # HWE.range = c(0, 1)
     # heterozygosity.range = c(0, 1)
-    
+    NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
     
     if( !file.exists( paste0(save.path) ) ){
       dir.create(paste0(save.path))
@@ -172,7 +172,6 @@ import.hapmap <-
         
         if(length(unique(xj))<=1) maf <- 0
         
-        NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
         xj <- ifelse(xj %in% NonGenotype, NA, xj)
         x.na <- xj[is.na(xj)]
         x.value <- xj[!is.na(xj)]

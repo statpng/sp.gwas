@@ -6,14 +6,14 @@ sp.glmnet <- function(x, y,
                       lambda.min.quantile=0.5,
                       K=100,
                       psub=0.5,
-                      setseed,
+                      # setseed,
                       verbose=TRUE,
                       ...){
 
     if( NROW(y) != nrow(x) ) stop("x and y should be equal length of row")
     if( NCOL(y)>1 & (family!="mgaussian") ) stop("The family should be 'mgaussian'")
     if( NCOL(y)==1 & (family=="mgaussian") ) stop("The family should not be 'mgaussian'")
-    if( missing(setseed) ) stop("Since setseed is missed, please enter a value of setseed.")
+    # if( missing(setseed) ) stop("Since setseed is missed, please enter a value of setseed.")
 
     if( family=="binomial" ) y <- ifelse( as.numeric(factor(as.vector(as.matrix(y)))) == 1, 0, 1 )
 
@@ -63,7 +63,7 @@ sp.glmnet <- function(x, y,
                 if( i %% 10 == 0 ) print(paste0("iteration=", i, "  alpha=", seq.alpha[j]))
             }
 
-            set.seed( setseed*i )
+            # set.seed( setseed*i )
 
             if( family=="binomial" ){
                 wsub <- c(sample(wc, nc), sample(wt, nt))

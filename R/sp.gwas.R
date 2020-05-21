@@ -20,7 +20,6 @@
 #' @param false.discovery The expected number of false discovery to be controlled. The larger it is, the higher threshold becomes. Default is c(1, 5, 10).
 #' @param permutation Permutation-based threshold values can be provided for \code{false.discovery} if permutation is TRUE. Default is FALSE.
 #' @param nperm The number of permutation replicates. Note that the calculation time increases as \code{nperm} increases. Default is 100.
-#' @param setseed You have to specify this setseed value to get reproducible results, because it uses the resampling approach when calculating the selection probability.
 #' @param plot.ylim A range of the y-axis. If NULL, automatic range in the y-axis will be provided. For plot.ylim=c(0,1), the y-axis has a range of 0 and 1.
 #' @param save.path A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. Note that if there is an output RData file in "save.path", sp.gwas will just load the output files(.RData) in there, thereby not providing the results for new "genotype" and "phenotype".
 #' @param lambda.min.quantile A range of lambda sequence. Default is 0.5 (median). If the range is so small that it can have many tied selection probabilities which is 1. To handle with this problem, you should increase the value of "lambda.min.quantile".
@@ -48,6 +47,8 @@
 #'     \item{myDATA}{A list of myX, myGD, myGM, myGT, myY, and myY.original(for "gaussian").}
 #'     \item{sp.res}{A list of sp.df and threshold.}
 #'     \item{Circular Manhattan plot}{Manhattan plot for the first phenotype is the innermost circle. Colors for chromosome is fixed, so that if you want to change colors, you would edit the R code of sp.manhattan function.}
+#'     
+#'     Note that, before your code, you have to specify the setseed value to get reproducible results, because it uses the resampling approach when calculating the selection probability.
 
 #' @author Kipoong Kim <kkp7700@gmail.com>
 #' @references 
@@ -79,7 +80,6 @@
 #'         family="gaussian",
 #'         false.discovery = c(1,5,10),
 #'         permutation=FALSE,
-#'         setseed=2019,
 #'         plot.ylim = NULL,
 #'         lambda.min.quantile = 0.5,
 #'         n.lambda = 10,
@@ -131,7 +131,6 @@
 #'         false.discovery = c(1,5,10),
 #'         permutation=TRUE,
 #'         nperm=10,
-#'         setseed=2020,
 #'         plot.ylim = NULL,
 #'         lambda.min.quantile = 0.5,
 #'         n.lambda = 10,
@@ -203,7 +202,7 @@ sp.gwas <- function( genotype = NULL,
                      false.discovery = c(1,5,10),
                      permutation=FALSE,
                      nperm=100,
-                     setseed=1234,
+                     # setseed=1234,
                      plot.ylim = NULL,
                      lambda.min.quantile = 0.5,
                      n.lambda = 10,
@@ -257,8 +256,7 @@ sp.gwas <- function( genotype = NULL,
                                  lambda.min.quantile=lambda.min.quantile,
                                  n.lambda=n.lambda,
                                  K=K,
-                                 psub=psub,
-                                 setseed=setseed)
+                                 psub=psub)
     } else {
         # Load the saved results file ---------------------------------------------
         print("The results file of selection probabilities already exists.")
@@ -283,12 +281,16 @@ sp.gwas <- function( genotype = NULL,
             y.col = y.col,
             y.id.col = y.id.col, 
             normalization = normalization,
+            QC = QC,
+            maf.range = maf.range,
+            HWE.range = HWE.range,
+            heterozygosity.range = heterozygosity.range,
+            remove.missingY = remove.missingY,
             method = method,
             family = family,
             false.discovery = false.discovery,
             permutation = permutation,
             nperm = nperm,
-            setseed = setseed,
             plot.ylim = plot.ylim,
             lambda.min.quantile = lambda.min.quantile,
             n.lambda = n.lambda,
