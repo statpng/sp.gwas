@@ -471,6 +471,7 @@ import.hapmap <-
 
     }
     
+    print("Saving the data files")
     
     write.csv(x=myX, file=paste0(save.path,"/[1]myX.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     if(family=="gaussian"){
