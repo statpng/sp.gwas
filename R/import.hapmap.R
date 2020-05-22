@@ -498,38 +498,48 @@ import.hapmap <-
  
     
     if(family=="gaussian"){
-      myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)
-      # myDATA.QC <- list(myX=myX[c(1,1+filter.intersect),], 
-      #                   myY.original=myY.original, 
-      #                   myY=myY, 
-      #                   myGD=myGD[,filter.intersect], 
-      #                   myGM=myGM[c(1,1+filter.intersect),], 
-      #                   myGT=myGT[c(1,1+filter.intersect),])
-      # myDATA.impute <- list(myX=myX.impute, myY.original=myY.original, myY=myY, myGD=myGD.impute, myGM=myGM, myGT=myGT.impute)  
-      # myDATA.imputeQC <- list(myX=myX.impute[c(1,1+filter.intersect),], 
-      #                   myY.original=myY.original, 
-      #                   myY=myY, 
-      #                   myGD=myGD.impute[,filter.intersect], 
-      #                   myGM=myGM[c(1,1+filter.intersect),], 
-      #                   myGT=myGT.impute[c(1,1+filter.intersect),])
+      if( !(QC|imputation) ){
+        myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)
+      } else if( QC ){
+        myDATA <- list(myX=myX[c(1,1+filter.intersect),],
+                          myY.original=myY.original,
+                          myY=myY,
+                          myGD=myGD[,filter.intersect],
+                          myGM=myGM[c(1,1+filter.intersect),],
+                          myGT=myGT[c(1,1+filter.intersect),])
+      } else if( imputation ){
+        myDATA <- list(myX=myX.impute, myY.original=myY.original, myY=myY, myGD=myGD.impute, myGM=myGM, myGT=myGT.impute)
+      } else if( imputation & QC ){
+        myDATA <- list(myX=myX.impute[c(1,1+filter.intersect),],
+                          myY.original=myY.original,
+                          myY=myY,
+                          myGD=myGD.impute[,filter.intersect],
+                          myGM=myGM[c(1,1+filter.intersect),],
+                          myGT=myGT.impute[c(1,1+filter.intersect),])
+      }
     } else {
-      myDATA <- list(myX=myX, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
-      # myDATA.QC <- list(myX=myX[c(1,1+filter.intersect),], 
-      #                   myY=myY, 
-      #                   myGD=myGD[,filter.intersect], 
-      #                   myGM=myGM[c(1,1+filter.intersect),], 
-      #                   myGT=myGT[c(1,1+filter.intersect),])
-      # myDATA.impute <- list(myX = myX.impute,
-      #                       myY = myY,
-      #                       myGD = myGD.impute,
-      #                       myGM = myGM,
-      #                       myGT = myGT.impute
-      #                     )
-      # myDATA.imputeQC <- list(myX=myX.impute[c(1,1+filter.intersect),], 
-      #                         myY=myY, 
-      #                         myGD=myGD.impute[,filter.intersect], 
-      #                         myGM=myGM[c(1,1+filter.intersect),], 
-      #                         myGT=myGT.impute[c(1,1+filter.intersect),])
+      if( !(QC|imputation) ){
+        myDATA <- list(myX=myX, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
+      } else if( QC ){
+        myDATA <- list(myX=myX[c(1,1+filter.intersect),],
+                          myY=myY,
+                          myGD=myGD[,filter.intersect],
+                          myGM=myGM[c(1,1+filter.intersect),],
+                          myGT=myGT[c(1,1+filter.intersect),])
+      } else if( imputation ){
+        myDATA <- list(myX = myX.impute,
+                              myY = myY,
+                              myGD = myGD.impute,
+                              myGM = myGM,
+                              myGT = myGT.impute
+                            )
+      } else if( imputation & QC ){
+        myDATA <- list(myX=myX.impute[c(1,1+filter.intersect),],
+                                myY=myY,
+                                myGD=myGD.impute[,filter.intersect],
+                                myGM=myGM[c(1,1+filter.intersect),],
+                                myGT=myGT.impute[c(1,1+filter.intersect),])
+      }
     }
     
     
