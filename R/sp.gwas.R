@@ -239,8 +239,38 @@ sp.gwas <- function( genotype = NULL,
     } else {
         print("The dataset file of genotype and phenotype already exists.")
         load(paste0(save.path,"/[1]Data",".RData"))
+        
+        if( remove.missingY ){
+            print(paste0("Removing the missing values of phenotypes(",
+                         sum(apply(myY.init, 1, function(x) any(is.na(x)))),
+                         ")."
+            ))
+            
+            if( any(apply(myDATA$myY,1,function(x) any(is.na(x)))) ){
+                wh.nonmissing <- which(!apply(myDATA$myY,1,function(x) any(is.na(x))))
+                id.nonmissing <- myDATA$myY[,1][which(!apply(myDATA$myY,1,function(x) any(is.na(x))))]
+                
+                
+                myDATA$myX <- myDATA$myX[, c(1:11, 11+which(unlist(myDATA$myX[1,-(1:11)])%in%id.nonmissing))]
+                myDATA$myY <- myDATA$myY[ which(myDATA$myY[,1] %in% id.nonmissing), ]
+                if( family=="gaussian" ){
+                    myDATA$myY.original <- myDATA$myY.original[ which(myDATA$myY.original[,1] %in% id.nonmissing), ]
+                }
+                myDATA$myGD=myDATA$myGD[ which(rownames(myDATA$myGD) %in% id.nonmissing), ]
+                myDATA$myGT=myDATA$myGT[ , which(myDATA$myGT[1,] %in% id.nonmissing)]
+                
+                # myDATA$myX <- myDATA$myX[, c(1:11, 11+wh.nonmissing)]
+                # myDATA$myY <- myDATA$myY[ wh.nonmissing, ]
+                # if( family=="gaussian" ){
+                #     myDATA$myY.original <- myDATA$myY.original[ wh.nonmissing, ]
+                # }
+                # myDATA$myGD=myDATA$myGD[ wh.nonmissing, ]
+                # myDATA$myGT=myDATA$myGT[ , wh.nonmissing]
+            }
+        }
     }
-
+    
+    
     # Beginning of Selection Probabilities ------------------------------------
 
     if( !file.exists( paste0(save.path,"/[2]sp.res", ".RData") ) ){

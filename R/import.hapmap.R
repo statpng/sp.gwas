@@ -33,6 +33,7 @@ import.hapmap <-
     # normalization = TRUE
     # remove.missingY = F
     # QC = TRUE
+    # imputation = TRUE
     # callrate.range = c(0.95, 1)
     # maf.range = c(0, 1)
     # HWE.range = c(0, 1)
