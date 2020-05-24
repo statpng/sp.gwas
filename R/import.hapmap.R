@@ -305,7 +305,7 @@ import.hapmap <-
     
     filter.allmissing <- which( !wh.allmissing )
     filter.onevalue <- which( !wh.onevalue )
-    filter.CallRate <- which( CallRate <= mac(callrate.range) & CallRate >= min(callrate.range) )
+    filter.CallRate <- which( CallRate <= max(callrate.range) & CallRate >= min(callrate.range) )
     filter.MAF <- which( MAF <= max(maf.range) & MAF >= min(maf.range) )
     filter.HWE <- which( sapply(pvalue.HWE, function(xx) min(xx, 1)) <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
     filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
