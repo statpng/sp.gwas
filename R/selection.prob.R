@@ -73,8 +73,10 @@ selection.prob <- function(x=myGD, y=myY, save.path, snp.info=myGM,
         }
         
     }
-    save( sp.perm, file=paste0(save.path,"/[2]sp.perm.results.RData") )
     
+    if(permutation){
+        save( sp.perm, file=paste0(save.path,"/[2]sp.perm.results.RData") )
+    }
 
     sp.df <- data.frame(snp.info[-1,c(1,3,4)], sp, stringsAsFactors=FALSE) %>%
         .[,!apply(., 2, function(X) all(is.na(X)) )]
