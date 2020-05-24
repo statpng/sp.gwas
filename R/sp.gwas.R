@@ -241,12 +241,13 @@ sp.gwas <- function( genotype = NULL,
         load(paste0(save.path,"/[1]Data",".RData"))
         
         if( remove.missingY ){
-            print(paste0("Removing the missing values of phenotypes(",
-                         sum(apply(myY.init, 1, function(x) any(is.na(x)))),
-                         ")."
-            ))
             
             if( any(apply(myDATA$myY,1,function(x) any(is.na(x)))) ){
+                print(paste0("Removing the missing values of phenotypes(",
+                             sum(apply(myData$myY, 1, function(x) any(is.na(x)))),
+                             ")."
+                ))
+                
                 wh.nonmissing <- which(!apply(myDATA$myY,1,function(x) any(is.na(x))))
                 id.nonmissing <- myDATA$myY[,1][which(!apply(myDATA$myY,1,function(x) any(is.na(x))))]
                 
@@ -258,6 +259,8 @@ sp.gwas <- function( genotype = NULL,
                 }
                 myDATA$myGD=myDATA$myGD[ which(rownames(myDATA$myGD) %in% id.nonmissing), ]
                 myDATA$myGT=myDATA$myGT[ , which(myDATA$myGT[1,] %in% id.nonmissing)]
+                
+                save( myDATA, file=paste0(save.path,"/[1]Data_missingY_removed",".RData"))
                 
                 # myDATA$myX <- myDATA$myX[, c(1:11, 11+wh.nonmissing)]
                 # myDATA$myY <- myDATA$myY[ wh.nonmissing, ]
