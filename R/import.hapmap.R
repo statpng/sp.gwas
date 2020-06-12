@@ -336,7 +336,7 @@ import.hapmap <-
     
     # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
-    myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="Middle", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
+    myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="None", Major.allele.zero=TRUE)), stringsAsFactors = FALSE ) )
     myGM.init <- myX.init[,1:4]
     myGT.init <- myX.init[,c(12:ncol(myX.init))]
     colnames(myGD.init) <- myX.init[-1,1]
