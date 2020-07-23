@@ -1,3 +1,4 @@
+#' @export selection.prob
 selection.prob <- function(x=myGD, y=myY, save.path, snp.info=myGM,
                            method=c("lasso", "enet"),
                            family="gaussian",

@@ -1,4 +1,5 @@
 #' @importFrom stats quantile
+#' @export sp.glmnet
 sp.glmnet <- function(x, y,
                       family="gaussian",
                       seq.alpha=NULL,

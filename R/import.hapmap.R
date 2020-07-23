@@ -1,5 +1,89 @@
+#' @name import.hapmap
+#' @title A function to import the hapmap formatted SNP data and the corresponding phenotype data
+#' @description Input: Hapmap-formatted SNP data, phenotype data
+#' 
+#' Output: Matched data files (genotype, numerical, SNP information, QC information, and phenotype) with QC and/or imputation.
+#' 
+#' @param genotype Either R object or file path can be considered. A genotype data is not a data.frame but a matrix with dimension \code{p} by \code{(n+11)}. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.
+#' @param phenotype Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
+#' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
+#' @param imputation TRUE or FALSE for whether imputation will be conducted.
+#' @param QC TRUE or FALSE for whether QC for SNPs will be conducted.
+#' @param maf.range A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).
+#' @param HWE.range A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).
+#' @param heterozygosity.range A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).
+#' @param remove.missingY If TRUE, the samples with missing values in phenotype data are removed. Accordingly, the corresponding genotype samples are also filtered out. Default is TRUE.
+#' @param y.col The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 2.
+#' @param y.id.col The column of sample ID in the phenotype data file. Default is 1.
+#' @param normalization If TRUE. phenotypes are converted to be normal-shape using box-cox transformation when all phenotypes are positive.
+#' @param family A family of response variable(phenotype). It is "gaussian" for continuous response variable, "binomial" for binary, "poisson" for count, etc. Now you can use only the same family for the multi phenotypes. For more details, see the function(\code{stats::glm}). Default is "gaussian".
+#' @param save.path A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. Note that if there is an output RData file in "save.path", sp.gwas will just load the output files(.RData) in there, thereby not providing the results for new "genotype" and "phenotype".
+#' 
+#' @details Hardy-Weinberg Equillibrium test was derived from "genetics" package.
+#' In imputation process, we first calculate the empirical allele frequencies.
+#' If we use a beta distribution as a prior in order to estimate the posterior distribution of allele frequency, 
+#' then the posterior distribution of allele frequecy is also beta distribution.
+#' Accordingly, we impute the missing values with samples from the posterior distribution.
+#'     
+#'     
+#' @author Kipoong Kim <kkp7700@gmail.com>
+#' 
+#' @examples
+#' genotype <- sp.gwas::genotype # load("genotype.rda")
+#' phenotype <- sp.gwas::phenotype # load("phenotype.rda")
+#' 
+#' # object
+#' import.hapmap(genotype = genotype, 
+#'               phenotype = phenotype, 
+#'               input.type = c("object", "path")[1], 
+#'               imputation = FALSE, 
+#'               QC = TRUE,  # if TRUE, the following QC steps (callrate, maf, HWE, heterozygosity) are conducted.
+#'               callrate.range = c(0.95, 1),
+#'               maf.range = c(1e-3, 1),
+#'               HWE.range = c(0, 1),
+#'               heterozygosity.range = c(0, 1),
+#'               remove.missingY = TRUE,   # if TRUE, the samples with any missing phenotypes are filtered out in all data.
+#'               save.path = "./EXAMPLE_obj",
+#'               y.id.col = 1, 
+#'               y.col = 2:4, 
+#'               normalization = FALSE, #if family is not "gaussian", i.e. not continuous variable, normalization should be FALSE
+#'               family="gaussian")
+#'
+#'
+#'
+#' # path
+#' 
+#' write.table( x = sp.gwas::genotype, file = "./genotype.csv", row.names = FALSE, col.names = FALSE, sep=",")
+#' write.table( x = sp.gwas::phenotype, file = "./phenotype.csv", row.names = FALSE, sep="," )
+#' 
+#' import.hapmap(genotype = "./genotype.csv", 
+#'               phenotype = "./phenotype.csv", 
+#'               input.type = c("object", "path")[2], 
+#'               QC = TRUE,  # if TRUE, the following QC steps (callrate, maf, HWE, heterozygosity) are conducted.
+#'               callrate.range = c(0.95, 1),
+#'               maf.range = c(1e-3, 1),
+#'               HWE.range = c(0, 1),
+#'               heterozygosity.range = c(0, 0.5),
+#'               remove.missingY = TRUE,   # if TRUE, the samples with any missing phenotypes are filtered out in all data.
+#'               save.path = "./EXAMPLE_path",
+#'               y.id.col = 1, 
+#'               y.col = 2:4, 
+#'               normalization = FALSE, #if family is not "gaussian", i.e. not continuous variable, normalization should be FALSE
+#'               family="gaussian")
+#'
+#'
+#' @return A folder containing a genomic data set in which the samples of genotype and phenotype data are matched, and that quality control steps can be conducted for genotype data
+#' 
 #' @import HardyWeinberg
 #' @import pbapply
+#' @import ggplot2
+#' @importFrom data.table fread
+#' @importFrom tidyr gather
+#' @importFrom gridExtra grid.arrange
+#' @importFrom bestNormalize boxcox
+#' @importFrom genetics genotype
+#' @importFrom genetics HWE.exact
+#' @importFrom dplyr %>%
 #' @export import.hapmap
 import.hapmap <-
   function(genotype = NULL,
@@ -142,9 +226,9 @@ import.hapmap <-
     # myX.init[,c(1:11, order( myX.init[1, 12:ncol(myX.init) ] )+11)] %>% filter(rs %in% c("rs_1_0006", "rs_2_48660")) %>% .[,1:20]
     
     # Match the genotype with the phenotype -----------------------------------
-    print("Matcing procedure between genotpe and phenotype")
+    print("Matcing samples of genotpe and phenotype")
     taxa.snp <- as.character( myX.init[1,12:ncol(myX.init), drop=TRUE] )
-    taxa.phenotype <- myY.init[, 1]
+    taxa.phenotype <- as.character( myY.init[, 1] )
     
     cat("IDs for genotype data are \n{", head(taxa.snp, 10), "}\n")
     cat("IDs for phenotype data are \n{", head(taxa.phenotype, 10), "}\n")
@@ -281,15 +365,24 @@ import.hapmap <-
     }
     
     
-    print("Removing the SNPs with only one genotype or missing genotype in all samples")
+    print("Removing the SNPs with missing genotype in all samples")
     wh.allmissing <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
       all( unique(xj) %in% NonGenotype )
     } )
+    cat( "# of SNPs with all missing =", sum( wh.allmissing ), "\n" )
+    
     # myX.init <- myX.init[c(1, which(!wh.allmissing)+1),]
     print("Removing the SNPs with only one value")
     wh.onevalue <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
       ( length(unique(xj)) == 1 )
     } )
+    cat( "# of SNPs with only one genotype =", sum( wh.onevalue ), "\n" )
+    
+    if( sum( wh.onevalue ) > 0 ){
+      cat("Example of SNPs with only one value:", "\n")
+      head( myX.init[-1,-(1:11)][which(wh.onevalue),] %>% {cbind(.[,1:10], "_"=".", "_"=".", "_"=".", .[,(ncol(.)-10+1):ncol(.)])} )
+    }
+    
     # myX.init <- myX.init[c(1, which(!wh.onevalue)+1),]
     print("Calculating call rate (the % of samples with a non-missing genotype")
     CallRate <- myX.init[-1,-(1:11)] %>% pbapply(1, function(xj){
@@ -337,13 +430,41 @@ import.hapmap <-
     # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
     myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="None", Major.allele.zero=T)), stringsAsFactors = FALSE ) )
+    
+    print("Checking the numericalization function")
+    tab_genotype_num <- lapply( 1:nrow(myGD.init), function(jj){
+      Xjj <- as.character(myX.init[-1,-(1:11)][jj,])
+      Xjj <- ifelse( Xjj %in% NonGenotype, NA, Xjj )
+      tab <- table(Geno=Xjj, Num=myGD.init[,jj] )
+      tab_dimnames <- dimnames(tab)
+      diag_rev <- (row(tab) + col(tab)) == (nrow(tab) + 1)
+      
+      if( all( tab[ which(!diag_rev, arr.ind=TRUE) ] == 0 ) ){
+        diag_trans <- ifelse(diag_rev, 1, 0 )
+        tab <- diag_trans %*% tab
+        rownames(tab) <- rev(tab_dimnames[[1]])
+        colnames(tab) <- tab_dimnames[[2]]
+      }
+      names(dimnames(tab)) <- NULL
+      tab
+      })
+    
+    print( head( tab_genotype_num ) )
+    false_Numericalization <- sapply( tab_genotype_num, function(tab) sum( tab[row(tab)>col(tab)] ) != 0 )
+    cat("The number of falsely converted SNPs in GAPIT.Numericalization =", sum(false_Numericalization), "\n")
+    if( sum(false_Numericalization) > 0 ){
+      print( head( tab_genotype_num[false_Numericalization] ) )
+    }
+    
+    
+    
     myGM.init <- myX.init[,1:4]
     myGT.init <- myX.init[,c(12:ncol(myX.init))]
     colnames(myGD.init) <- myX.init[-1,1]
     rownames(myGD.init) <- myX.init[1,-c(1:11)]
     
-    missing.snp <- apply( myX.init[-1,-(1:11)], 1, function(X) sum(is.na(X)) )
-    missing.sample <- apply( myX.init[-1,-(1:11)], 2, function(X) sum(is.na(X)) )
+    missing.snp <- apply( myX.init[-1,-(1:11)], 1, function(X) sum(is.na(X) | X %in% NonGenotype ) )
+    missing.sample <- apply( myX.init[-1,-(1:11)], 2, function(X) sum(is.na(X) | X %in% NonGenotype ) )
     
     write.csv(x=data.frame(ID=myX.init[-1,1], missing.snp, stringsAsFactors = FALSE), file=paste0(save.path,"/[0]missing.snp.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=data.frame(ID=as.character(myX.init[1,-(1:11)]), missing.sample, stringsAsFactors = FALSE), file=paste0(save.path,"/[0]missing.sample.csv"), row.names=FALSE, fileEncoding = "UTF-8")
@@ -398,7 +519,11 @@ import.hapmap <-
         norm.pvalue[j] <- round( shapiro.test(myY[,j+1])$p.value, 4)
       }
       
+      
+      devAskNewPage(ask = FALSE)
+      par(ask=F)
       if( normalization ){
+        
         Hist.y.original <- myY.original %>%
           .[,-1,drop=F] %>%
           gather(PHENOTYPE) %>%
@@ -450,17 +575,66 @@ import.hapmap <-
     
     
     
+    
     print("Imputation")
     if(imputation){
       myX.impute <- myX
       set.seed(2020)
       myX.impute[-1,-(1:11)] <- 
         pbapply::pbapply(myX[-1,-(1:11)], 1, function(xj){
-          as.character(unlist(xj)) %>% png.impute.snp
+          as.character(unlist(xj)) %>% png.impute.snp(., NonGenotype)
         }) %>% t
+      
+      print("Check the difference between before and after imputation.")
+      wh.missing <- which( apply( myX[-1,-(1:11)], 1, function(xj) any(xj %in% NonGenotype) ) )
+      
+      out_missing <- 
+        lapply( wh.missing, function(jj){
+          Xjj <- as.character( myX[-1,-(1:11)][jj,] )
+          Xjj_imp <- as.character( myX.impute[-1,-(1:11)][jj,] )
+          
+          tab <- table( Xjj, Xjj_imp )
+          
+          rbind( REST=as.matrix(tab[rownames(tab)!="NN",,drop=F]),
+                 MISSING=tab[rownames(tab)=="NN",] )
+        })
+      
+      if( length(out_missing)>0 ){
+        sink(file=paste0(save.path,"/[0]Impute_BeforeAfter.csv"))
+        out_missing
+        sink()
+      } else {
+        print("There is no missing value")
+      }
       
       myGD.impute <- suppressWarnings( as.data.frame( apply(myX.impute[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="None", Major.allele.zero=T)), stringsAsFactors = FALSE ) )
       myGT.impute <- myX.impute[,c(12:ncol(myX.impute))]
+      
+      print("Checking the numericalization function")
+      tab_genotype_num_impute <- lapply( 1:nrow(myGD.impute), function(jj){
+        Xjj <- as.character(myX.impute[-1,-(1:11)][jj,])
+        Xjj <- ifelse( Xjj %in% NonGenotype, NA, Xjj )
+        tab <- table(Geno=Xjj, Num=myGD.impute[,jj] )
+        tab_dimnames <- dimnames(tab)
+        diag_rev <- (row(tab) + col(tab)) == (nrow(tab) + 1)
+        
+        if( all( tab[ which(!diag_rev, arr.ind=TRUE) ] == 0 ) ){
+          diag_trans <- ifelse(diag_rev, 1, 0 )
+          tab <- diag_trans %*% tab
+          rownames(tab) <- rev(tab_dimnames[[1]])
+          colnames(tab) <- tab_dimnames[[2]]
+        }
+        names(dimnames(tab)) <- NULL
+        tab
+      })
+      
+      print( head( tab_genotype_num_impute ) )
+      false_Numericalization_impute <- sapply( tab_genotype_num_impute, function(tab) sum( tab[row(tab)>col(tab)] ) != 0 )
+      cat("The number of falsely converted SNPs in GAPIT.Numericalization =", sum(false_Numericalization), "\n")
+      if( sum(false_Numericalization_impute) > 0 ){
+        print( head( tab_genotype_num_impute[false_Numericalization_impute] ) )
+      }
+      
       
       colnames(myGD.impute) <- myX.impute[-1,1]
       rownames(myGD.impute) <- myX.impute[1,-c(1:11)]
@@ -549,5 +723,42 @@ import.hapmap <-
     
     # End ---------------------------------------------------------------------
     
-    return( myDATA )
+    invisible( myDATA )
   }
+
+
+# library(dplyr)
+# library(tidyr)
+# library(pbapply)
+# library(ggplot2)
+# library(bestNormalize)
+# library(genetics)
+# library(HardyWeinberg)
+# library(gridExtra)
+# source("./R/png.impute.snp.R")
+# source("./R/gapit.functions.R")
+# 
+# genotype_without_NA <- R.utils::loadToEnv("./data/genotype.rda")$genotype
+# phenotype <- R.utils::loadToEnv("./data/phenotype.rda")$phenotype
+# # genotype_without_NA <- sp.gwas::genotype
+# # phenotype <- sp.gwas::phenotype
+# genotype_with_NA <- genotype_without_NA
+# set.seed(123)
+# for( j in 1:100 ){
+#   genotype_with_NA[-1,-(1:11)][j, sample(10, 2, replace = FALSE)] <- "NN"
+# }
+# genotype <- genotype_with_NA
+# input.type = c("object", "path")[1]
+# imputation = TRUE
+# QC = TRUE
+# callrate.range = c(0.95, 1)
+# maf.range = c(1e-3, 1)
+# HWE.range = c(0, 1)
+# heterozygosity.range = c(0, 1)
+# remove.missingY = TRUE
+# save.path = "./EXAMPLE_tmp"
+# y.id.col = 1
+# y.col = 2:4
+# normalization = FALSE
+# family="gaussian"
+

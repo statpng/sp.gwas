@@ -7,7 +7,10 @@ sp.manhattan <- function(sp.df,
                          plot.type = c("pdf", "jpg"),
                          dpi = 300){
 
-
+    
+    devAskNewPage(ask = FALSE)
+    par(ask=F)
+    
     PLOT.NAME <- paste0(save.path,"/[3]CircularManhattanPlot_",plot.name)
         if (plot.type == "jpg")
             jpeg(paste(PLOT.NAME, ".jpg", sep = ""),
@@ -64,5 +67,7 @@ sp.manhattan <- function(sp.df,
     if( manhattan.type == "r" ){
         setwd("..")
     }
+    
+    
 }
 

@@ -8,7 +8,7 @@
 #' @param phenotype Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
 #' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
 #' @param imputation TRUE or FALSE for whether imputation will be conducted.
-#' @param QC TRUE or FALSE for whether QC will be conducted.
+#' @param QC TRUE or FALSE for whether QC for SNPs will be conducted.
 #' @param maf.range A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).
 #' @param HWE.range A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).
 #' @param heterozygosity.range A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).
@@ -64,6 +64,7 @@
 #' phenotype <- sp.gwas::phenotype # load("phenotype.rda")
 #' 
 #' # elastic-net model
+#' devAskNewPage(ask = FALSE)
 #' sp.gwas(genotype = genotype, 
 #'         phenotype = phenotype, 
 #'         input.type = c("object", "path")[1], 
@@ -73,7 +74,7 @@
 #'         HWE.range = c(0, 1),
 #'         heterozygosity.range = c(0, 1),
 #'         remove.missingY = TRUE,
-#'         save.path = "./EXAMPLE",
+#'         save.path = "./EXAMPLE_enet",
 #'         y.id.col = 1, 
 #'         y.col = 2:4, 
 #'         normalization = FALSE, 
@@ -93,16 +94,16 @@
 #' 
 #' 
 #' # Manhattan plot for the first phenotype (Y1)
-#' results <- read.csv("./EXAMPLE/[2]sp.results.csv")
+#' results <- read.csv("./EXAMPLE_enet/[2]sp.results.csv")
 #' class(results$chr) <- "numeric"
 #' class(results$pos) <- "numeric"
-#' thresholds <- read.csv("./EXAMPLE/[2]sp.thresholds.csv")
+#' thresholds <- read.csv("./EXAMPLE_enet/[2]sp.thresholds.csv")
 #' threshold_Y1_FD1 <- subset( subset(thresholds, Method=="Theoretical"), FD==1)$Y1
 #' threshold_Y1_FD10 <- subset( subset(thresholds, Method=="Theoretical"), FD==10)$Y1
 #' highlight1 <- results$rs[results$Y1 > threshold_Y1_FD1]
 #' highlight10 <- setdiff( results$rs[results$Y1 > threshold_Y1_FD10], highlight1 )
 #' 
-#' jpeg("./EXAMPLE/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
+#' jpeg("./EXAMPLE_enet/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
 #' qqman_manhattan(results,
 #'                 chr="chr", bp="pos", snp="rs", p="Y1", logp=FALSE, 
 #'                 suggestiveline = threshold_Y1_FD1,
@@ -116,6 +117,7 @@
 #' 
 #' # Lasso model with permuted threshold
 #' 
+#' devAskNewPage(ask = FALSE)
 #' sp.gwas(genotype = genotype, 
 #'         phenotype = phenotype, 
 #'         input.type = c("object", "path")[1], 
@@ -123,7 +125,7 @@
 #'         HWE.range = c(0, 1),
 #'         heterozygosity.range = c(0, 1),
 #'         remove.missingY = TRUE,
-#'         save.path = "./EXAMPLE_perm",
+#'         save.path = "./EXAMPLE_lasso-perm",
 #'         y.id.col = 1, 
 #'         y.col = 2, 
 #'         normalization = FALSE, 
@@ -143,17 +145,17 @@
 #'         plot.dpi = 300)
 #'         
 #' # Manhattan plot for the first phenotype (Y1) with permuted threshold
-#' results <- read.csv("./EXAMPLE_perm/[2]sp.results.csv")
+#' results <- read.csv("./EXAMPLE_lasso-perm/[2]sp.results.csv")
 #' class(results$chr) <- "numeric"
 #' class(results$pos) <- "numeric"
-#' thresholds <- read.csv("./EXAMPLE_perm/[2]sp.thresholds.csv")
+#' thresholds <- read.csv("./EXAMPLE_lasso-perm/[2]sp.thresholds.csv")
 #' threshold_theory_FD1 <- subset( subset(thresholds, Method=="Theoretical"), FD==1)$Y1
 #' threshold_perm_FD1 <- subset( subset(thresholds, Method=="Permuted"), FD==1)$Y1
 #' highlight_theory <- results$rs[results$Y1 > threshold_theory_FD1]
 #' highlight_perm <- results$rs[results$Y1 > threshold_perm_FD1]
 #' highlight_intersect <- intersect(highlight_theory, highlight_perm)
 #' 
-#' jpeg("./EXAMPLE_perm/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
+#' jpeg("./EXAMPLE_lasso-perm/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
 #' qqman_manhattan(results,
 #'                 chr="chr", bp="pos", snp="rs", p="Y1", logp=FALSE, 
 #'                 suggestiveline = threshold_theory_FD1,
@@ -163,6 +165,7 @@
 #'                 ylab="Selection probabilities", ylim=c(0,1))
 #' dev.off()
 #'
+#' 
 #'
 #' @return The dataframe with new mean and sum columns
 #' @import CMplot
@@ -296,16 +299,17 @@ sp.gwas <- function( genotype = NULL,
         print("The results file of selection probabilities already exists.")
         load( paste0(save.path,"/[2]sp.res", ".RData") )
     }
-
-    sp.manhattan(sp.df=sp.res$sp.df,
-                 threshold=sp.res$threshold,
-                 save.path=save.path,
-                 manhattan.type=manhattan.type,
-                 plot.ylim=plot.ylim,
-                 plot.type=plot.type,
-                 dpi=plot.dpi
-    )
-
+    
+    
+    sp.manhattan( sp.df=sp.res$sp.df,
+                  threshold=sp.res$threshold,
+                  save.path=save.path,
+                  manhattan.type=manhattan.type,
+                  plot.ylim=plot.ylim,
+                  plot.type=plot.type,
+                  dpi=plot.dpi )
+    
+    
     sink(file = paste0(save.path,"/[4]information.txt"))
     print(
         list(

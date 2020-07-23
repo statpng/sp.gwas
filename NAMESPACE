@@ -3,6 +3,8 @@
 export(import.hapmap)
 export(qqman_manhattan)
 export(qqman_qq)
+export(selection.prob)
+export(sp.glmnet)
 export(sp.gwas)
 import(CMplot)
 import(HardyWeinberg)

@@ -1,4 +1,4 @@
-png.impute.snp <- function(xx){
+png.impute.snp <- function(xx, NonGenotype=NULL){
   # xx <- c("NN", "NA", "AA", "AT", "AA", "AA", "AA")
   # xx <- c("NN", "AA", "AA", "AA", "AA", "AA", "AA")
   # xx <- c("AA", "AA", "AA", "AA", "AA", "AA", "AA")
@@ -6,7 +6,7 @@ png.impute.snp <- function(xx){
   # xx <- c("AT", "AT", "AT", "TA", "TA", "AT", "NN")
   # xx <- c("AA", "TT", "AA", "TT", "TT", "TT", "NN")
   # xx <- c("AA", "TT", "AA", "TT", "TT", "GG", "NN")
-  NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
+  if( is.null(NonGenotype) ) NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
   
   if( any( class(xx) %in% c("data.frame", "list") ) ) xx <- as.character(unlist(xx))
   xx <- ifelse(xx %in% NonGenotype, NA, xx)

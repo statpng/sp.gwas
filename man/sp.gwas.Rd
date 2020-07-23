@@ -42,7 +42,9 @@ sp.gwas(
 
 \item{input.type}{Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".}
 
-\item{QC}{TRUE or FALSE for whether QC will be conducted.}
+\item{imputation}{TRUE or FALSE for whether imputation will be conducted.}
+
+\item{QC}{TRUE or FALSE for whether QC for SNPs will be conducted.}
 
 \item{maf.range}{A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).}
 
@@ -121,6 +123,7 @@ genotype <- sp.gwas::genotype # load("genotype.rda")
 phenotype <- sp.gwas::phenotype # load("phenotype.rda")
 
 # elastic-net model
+devAskNewPage(ask = FALSE)
 sp.gwas(genotype = genotype, 
         phenotype = phenotype, 
         input.type = c("object", "path")[1], 
@@ -130,7 +133,7 @@ sp.gwas(genotype = genotype,
         HWE.range = c(0, 1),
         heterozygosity.range = c(0, 1),
         remove.missingY = TRUE,
-        save.path = "./EXAMPLE",
+        save.path = "./EXAMPLE_enet",
         y.id.col = 1, 
         y.col = 2:4, 
         normalization = FALSE, 
@@ -150,16 +153,16 @@ sp.gwas(genotype = genotype,
 
 
 # Manhattan plot for the first phenotype (Y1)
-results <- read.csv("./EXAMPLE/[2]sp.results.csv")
+results <- read.csv("./EXAMPLE_enet/[2]sp.results.csv")
 class(results$chr) <- "numeric"
 class(results$pos) <- "numeric"
-thresholds <- read.csv("./EXAMPLE/[2]sp.thresholds.csv")
+thresholds <- read.csv("./EXAMPLE_enet/[2]sp.thresholds.csv")
 threshold_Y1_FD1 <- subset( subset(thresholds, Method=="Theoretical"), FD==1)$Y1
 threshold_Y1_FD10 <- subset( subset(thresholds, Method=="Theoretical"), FD==10)$Y1
 highlight1 <- results$rs[results$Y1 > threshold_Y1_FD1]
 highlight10 <- setdiff( results$rs[results$Y1 > threshold_Y1_FD10], highlight1 )
 
-jpeg("./EXAMPLE/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
+jpeg("./EXAMPLE_enet/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
 qqman_manhattan(results,
                 chr="chr", bp="pos", snp="rs", p="Y1", logp=FALSE, 
                 suggestiveline = threshold_Y1_FD1,
@@ -173,6 +176,7 @@ dev.off()
 
 # Lasso model with permuted threshold
 
+devAskNewPage(ask = FALSE)
 sp.gwas(genotype = genotype, 
         phenotype = phenotype, 
         input.type = c("object", "path")[1], 
@@ -180,7 +184,7 @@ sp.gwas(genotype = genotype,
         HWE.range = c(0, 1),
         heterozygosity.range = c(0, 1),
         remove.missingY = TRUE,
-        save.path = "./EXAMPLE_perm",
+        save.path = "./EXAMPLE_lasso-perm",
         y.id.col = 1, 
         y.col = 2, 
         normalization = FALSE, 
@@ -200,17 +204,17 @@ sp.gwas(genotype = genotype,
         plot.dpi = 300)
         
 # Manhattan plot for the first phenotype (Y1) with permuted threshold
-results <- read.csv("./EXAMPLE_perm/[2]sp.results.csv")
+results <- read.csv("./EXAMPLE_lasso-perm/[2]sp.results.csv")
 class(results$chr) <- "numeric"
 class(results$pos) <- "numeric"
-thresholds <- read.csv("./EXAMPLE_perm/[2]sp.thresholds.csv")
+thresholds <- read.csv("./EXAMPLE_lasso-perm/[2]sp.thresholds.csv")
 threshold_theory_FD1 <- subset( subset(thresholds, Method=="Theoretical"), FD==1)$Y1
 threshold_perm_FD1 <- subset( subset(thresholds, Method=="Permuted"), FD==1)$Y1
 highlight_theory <- results$rs[results$Y1 > threshold_theory_FD1]
 highlight_perm <- results$rs[results$Y1 > threshold_perm_FD1]
 highlight_intersect <- intersect(highlight_theory, highlight_perm)
 
-jpeg("./EXAMPLE_perm/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
+jpeg("./EXAMPLE_lasso-perm/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
 qqman_manhattan(results,
                 chr="chr", bp="pos", snp="rs", p="Y1", logp=FALSE, 
                 suggestiveline = threshold_theory_FD1,
@@ -219,6 +223,7 @@ qqman_manhattan(results,
                 col.highlight = c("blue", "red", "purple"),
                 ylab="Selection probabilities", ylim=c(0,1))
 dev.off()
+
 
 
 }
