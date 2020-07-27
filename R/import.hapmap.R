@@ -585,7 +585,7 @@ import.hapmap <-
           as.character(unlist(xj)) %>% png.impute.snp(., NonGenotype)
         }) %>% t
       
-      print("Check the difference between before and after imputation.")
+      print("Checking the difference between before and after imputation.")
       wh.missing <- which( apply( myX[-1,-(1:11)], 1, function(xj) any(xj %in% NonGenotype) ) )
       
       out_missing <- 
