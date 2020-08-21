@@ -102,6 +102,10 @@ import.hapmap <-
            HWE.range = c(0, 1),
            heterozygosity.range = c(0, 1)) {
     
+    # library(pbapply)
+    # library(genetics); library(HardyWeinberg)
+    # library(tidyr); library(bestNormalize); library(ggplot2); library(gridExtra)
+    
     # genotype.xlsx <- readxl::read_excel("./EXAMPLE/NEW_Genotype20190708.xlsx")
     # genotype.list <- R.utils::loadToEnv("./EXAMPLE/[data]TOTAL_GLOBAL_KOREA_final.RData")
     # phenotype.list <- R.utils::loadToEnv("./EXAMPLE/[data]PHENOTYPE_final.RData")
@@ -429,15 +433,17 @@ import.hapmap <-
     
     # Numericalize the coding of genotypes ------------------------------------
     print("Performing the numericalization procedure for genotpe data.")
-    myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="None", Major.allele.zero=T)), stringsAsFactors = FALSE ) )
+    myGD.init <- suppressWarnings( as.data.frame( apply(myX.init[-1,-(1:11)], 1, function(one) png.Numericalization(one, bit=2, Major.allele.zero=T)), stringsAsFactors = FALSE ) )
     
     print("Checking the numericalization function")
-    tab_genotype_num <- lapply( 1:nrow(myGD.init), function(jj){
+    tab_genotype_num <- 
+      pbapply::pblapply( 1:floor(nrow(myGD.init)*0.01), function(jj){
       Xjj <- as.character(myX.init[-1,-(1:11)][jj,])
       Xjj <- ifelse( Xjj %in% NonGenotype, NA, Xjj )
       tab <- table(Geno=Xjj, Num=myGD.init[,jj] )
       tab_dimnames <- dimnames(tab)
       diag_rev <- (row(tab) + col(tab)) == (nrow(tab) + 1)
+      if( length(tab) == 0 ) return(tab)
       
       if( all( tab[ which(!diag_rev, arr.ind=TRUE) ] == 0 ) ){
         diag_trans <- ifelse(diag_rev, 1, 0 )
@@ -589,7 +595,7 @@ import.hapmap <-
       wh.missing <- which( apply( myX[-1,-(1:11)], 1, function(xj) any(xj %in% NonGenotype) ) )
       
       out_missing <- 
-        lapply( wh.missing, function(jj){
+        pbapply::pblapply( wh.missing[1:floor(length(wh.missing)*0.01)], function(jj){
           Xjj <- as.character( myX[-1,-(1:11)][jj,] )
           Xjj_imp <- as.character( myX.impute[-1,-(1:11)][jj,] )
           
@@ -607,11 +613,12 @@ import.hapmap <-
         print("There is no missing value")
       }
       
-      myGD.impute <- suppressWarnings( as.data.frame( apply(myX.impute[-1,-(1:11)], 1, function(one) GAPIT.Numericalization(one, bit=2, impute="None", Major.allele.zero=T)), stringsAsFactors = FALSE ) )
+      myGD.impute <- suppressWarnings( as.data.frame( apply(myX.impute[-1,-(1:11)], 1, function(one) png.Numericalization(one, bit=2, Major.allele.zero=T)), stringsAsFactors = FALSE ) )
       myGT.impute <- myX.impute[,c(12:ncol(myX.impute))]
       
-      print("Checking the numericalization function")
-      tab_genotype_num_impute <- lapply( 1:nrow(myGD.impute), function(jj){
+      print("Checking the Numericalization step after imputation")
+      tab_genotype_num_impute <- 
+        pbapply::pblapply( 1:floor(nrow(myGD.impute)*0.01), function(jj){
         Xjj <- as.character(myX.impute[-1,-(1:11)][jj,])
         Xjj <- ifelse( Xjj %in% NonGenotype, NA, Xjj )
         tab <- table(Geno=Xjj, Num=myGD.impute[,jj] )
@@ -630,7 +637,7 @@ import.hapmap <-
       
       print( head( tab_genotype_num_impute ) )
       false_Numericalization_impute <- sapply( tab_genotype_num_impute, function(tab) sum( tab[row(tab)>col(tab)] ) != 0 )
-      cat("The number of falsely converted SNPs in GAPIT.Numericalization =", sum(false_Numericalization), "\n")
+      cat("The number of falsely converted SNPs in GAPIT.Numericalization after imputation =", sum(false_Numericalization), "\n")
       if( sum(false_Numericalization_impute) > 0 ){
         print( head( tab_genotype_num_impute[false_Numericalization_impute] ) )
       }
@@ -721,7 +728,29 @@ import.hapmap <-
     
     save( myDATA, file=paste0(save.path,"/[1]Data",".RData"))
     
+    
+    sink(file = paste0(save.path,"/[1]import.hapamp_information.txt"))
+    print(
+      list(
+        genotype = deparse(substitute(genotype)),
+        phenotype = deparse(substitute(phenotype)),
+        input.type = c("object", "path"),
+        save.path = save.path,
+        y.col = y.col,
+        y.id.col = y.id.col, 
+        normalization = normalization,
+        remove.missingY = remove.missingY,
+        imputation = imputation,
+        QC = QC,
+        callrate.range = callrate.range,
+        maf.range = maf.range,
+        HWE.range = HWE.range,
+        heterozygosity.range = heterozygosity.range
+      )
+    )
+    sink()
     # End ---------------------------------------------------------------------
+    
     
     invisible( myDATA )
   }

@@ -42,5 +42,9 @@ rsconnect/
 
 check/
 sp.folder/
+EXAMPLE*
 EXAMPLE/
 EXAMPLE_perm/
+EXAMPLE_obj/
+EXAMPLE_obj_imputation/
+EXAMPLE_tmp/

@@ -77,7 +77,7 @@
     if(len<=1 | len> 3)x=0
     
     #2 status
-    if(len==2)x=ifelse(x=="N",NA,ifelse(x==lev[1],0,2))
+    if(len==2)x=ifelse(x=="N",NA,ifelse(x==lev[1],0,1))
     
     #3 status
     if(bit==1){

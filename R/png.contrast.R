@@ -72,6 +72,11 @@ png.compare_impute <- function(before, after, equalize=TRUE){
 #' @export png.compare_numericalization
 png.compare_numericalization <- function(before, after, equalize=TRUE){
 
+  if(colnames(after)[1] == "ID"){
+    rownames(after) <- after$ID
+    after <- after[,-1]
+  }
+  
   # before <- numericalization_before
   # after <- numericalization_after
   # rownames(after) <- after[,1];  after <- after[,-1]
@@ -133,7 +138,7 @@ png.compare_numericalization <- function(before, after, equalize=TRUE){
   
   
   
-  
+  NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
   print("Checking the numericalization function")
   tab_genotype_num <- pblapply( 1:(nrow(before)-1), function(jj){
     Xjj <- as.character(unlist(before[-1,-(1:11)][jj,]))
@@ -162,8 +167,11 @@ png.compare_numericalization <- function(before, after, equalize=TRUE){
     print( head( tab_genotype_num[false_Numericalization] ) )
   }
   
-  
-  names(tab_genotype_num) <- snp.before3
+  if(equalize){
+    names(tab_genotype_num) <- snp.before3
+  } else {
+    names(tab_genotype_num) <- snp.before
+  }
   
   list( before = before,
         after = after,

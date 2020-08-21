@@ -1,7 +1,7 @@
 Package: sp.gwas
 Type: Package
 Title: Variable Selection Package Using Selection Probability for Genome-Wide Association Studies
-Version: 1.2.0
+Version: 1.3.0
 Author: Kipoong Kim
 Maintainer: Kipoong Kim <kkp7700@gmail.com>
 Description: Selection probabilities using generalized linear model with regularization for a SNP data in the hapmap format.
