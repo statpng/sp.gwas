@@ -4,7 +4,7 @@ Title: Variable Selection Package Using Selection Probability for Genome-Wide As
 Version: 1.3.0
 Author: Kipoong Kim
 Maintainer: Kipoong Kim <kkp7700@gmail.com>
-Description: Selection probabilities using generalized linear model with regularization for a SNP data in the hapmap format.
+Description: This package provides selection probability that can be used to prioritize variables for a given regularization model. For an analysis of high-dimensional genomic data, the regularization model can accommodate correlations between predictors rather than individual tests such as t-test and ANOVA. Moreover, the selection probability can prioritize the variables not depending on tuning parameter. This package provides output files of three types: (1) Matched data files (genotype, numerical, snp info, phenotype, QC results), (2) Selection result files (selection probabilities and empirical thresholds), (3) Manhattan plot.
 License: GPL-2 | GPL-3
 Depends: R (>= 3.6.0)
 Imports: ggplot2, compiler, glmnet, dplyr, CMplot, readxl, data.table, writexl, bestNormalize, gridExtra, tidyr, gtools, calibrate, genetics, pbapply, HardyWeinberg
