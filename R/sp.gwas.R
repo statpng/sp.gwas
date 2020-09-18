@@ -87,6 +87,7 @@
 #'         n.lambda = 10,
 #'         K = 20,
 #'         psub = 0.5,
+#'         plot = FALSE,
 #'         manhattan.type = c("c", "r")[1],
 #'         plot.name = "Test",
 #'         plot.type = "jpg",
@@ -302,13 +303,16 @@ sp.gwas <- function( genotype = NULL,
     }
     
     
-    sp.manhattan( sp.df=sp.res$sp.df,
-                  threshold=sp.res$threshold,
-                  save.path=save.path,
-                  manhattan.type=manhattan.type,
-                  plot.ylim=plot.ylim,
-                  plot.type=plot.type,
-                  dpi=plot.dpi )
+    if(plot){
+        sp.manhattan( sp.df=sp.res$sp.df,
+                      threshold=sp.res$threshold,
+                      save.path=save.path,
+                      manhattan.type=manhattan.type,
+                      plot.ylim=plot.ylim,
+                      plot.type=plot.type,
+                      dpi=plot.dpi )
+    }
+    
     
     
     sink(file = paste0(save.path,"/[4]information.txt"))
