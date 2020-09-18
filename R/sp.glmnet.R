@@ -91,7 +91,7 @@ sp.glmnet <- function(x, y,
 
 
 
-
+#' @export sp.threshold
 sp.threshold <- function(sp, FD){
     if(max(sp)>1 | min(sp)<0) stop("'Sel.prob' should be in [0,1].")
     if(length( dim(sp) ) < 3) stop("'sp' should be a 3-dimensional array.")
