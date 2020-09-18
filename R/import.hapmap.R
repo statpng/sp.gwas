@@ -683,6 +683,13 @@ import.hapmap <-
     if(family=="gaussian"){
       if( !(QC|imputation) ){
         myDATA <- list(myX=myX, myY.original=myY.original, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)
+      } else if( imputation & QC ){
+        myDATA <- list(myX=myX.impute[c(1,1+filter.intersect),],
+                       myY.original=myY.original,
+                       myY=myY,
+                       myGD=myGD.impute[,filter.intersect],
+                       myGM=myGM[c(1,1+filter.intersect),],
+                       myGT=myGT.impute[c(1,1+filter.intersect),])
       } else if( QC ){
         myDATA <- list(myX=myX[c(1,1+filter.intersect),],
                           myY.original=myY.original,
@@ -692,17 +699,16 @@ import.hapmap <-
                           myGT=myGT[c(1,1+filter.intersect),])
       } else if( imputation ){
         myDATA <- list(myX=myX.impute, myY.original=myY.original, myY=myY, myGD=myGD.impute, myGM=myGM, myGT=myGT.impute)
-      } else if( imputation & QC ){
-        myDATA <- list(myX=myX.impute[c(1,1+filter.intersect),],
-                          myY.original=myY.original,
-                          myY=myY,
-                          myGD=myGD.impute[,filter.intersect],
-                          myGM=myGM[c(1,1+filter.intersect),],
-                          myGT=myGT.impute[c(1,1+filter.intersect),])
       }
     } else {
-      if( !(QC|imputation) ){
+      if( (!QC) & (!imputation) ){
         myDATA <- list(myX=myX, myY=myY, myGD=myGD, myGM=myGM, myGT=myGT)  
+      } else if( imputation & QC ){
+        myDATA <- list(myX=myX.impute[c(1,1+filter.intersect),],
+                       myY=myY,
+                       myGD=myGD.impute[,filter.intersect],
+                       myGM=myGM[c(1,1+filter.intersect),],
+                       myGT=myGT.impute[c(1,1+filter.intersect),])
       } else if( QC ){
         myDATA <- list(myX=myX[c(1,1+filter.intersect),],
                           myY=myY,
@@ -716,12 +722,6 @@ import.hapmap <-
                               myGM = myGM,
                               myGT = myGT.impute
                             )
-      } else if( imputation & QC ){
-        myDATA <- list(myX=myX.impute[c(1,1+filter.intersect),],
-                                myY=myY,
-                                myGD=myGD.impute[,filter.intersect],
-                                myGM=myGM[c(1,1+filter.intersect),],
-                                myGT=myGT.impute[c(1,1+filter.intersect),])
       }
     }
     
