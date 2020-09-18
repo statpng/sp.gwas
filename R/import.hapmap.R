@@ -9,6 +9,7 @@
 #' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
 #' @param imputation TRUE or FALSE for whether imputation will be conducted.
 #' @param QC TRUE or FALSE for whether QC for SNPs will be conducted.
+#' @param callrate.range A numeric vector indicating the range of non-missing proportion. Default is c(0, 1).
 #' @param maf.range A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).
 #' @param HWE.range A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).
 #' @param heterozygosity.range A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).

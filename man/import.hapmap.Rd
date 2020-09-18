@@ -45,6 +45,8 @@ import.hapmap(
 
 \item{QC}{TRUE or FALSE for whether QC for SNPs will be conducted.}
 
+\item{callrate.range}{A numeric vector indicating the range of non-missing proportion. Default is c(0, 1).}
+
 \item{maf.range}{A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).}
 
 \item{HWE.range}{A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).}
