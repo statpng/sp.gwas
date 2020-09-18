@@ -1,3 +1,5 @@
+#' @import CMplot
+#' @export sp.glmnet
 sp.manhattan <- function(sp.df,
                          threshold,
                          save.path,
