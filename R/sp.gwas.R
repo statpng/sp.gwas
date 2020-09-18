@@ -27,6 +27,7 @@
 #' @param n.lambda The length of lambda sequence. The larger n.lambda, the more detailed lambda sequence will be.
 #' @param K	The number of iterations in resampling when calculating the selection probabilities.
 #' @param psub The subsampling proportion. For efficiency, default is 0.5.
+#' @param figure figure will be plotted or not
 #' @param manhattan.type A type of manhattan plot to be drawn includes circular('c') and rectangular('m').
 #' @param plot.name A name of plot file.
 #' @param plot.type A type of plot file which includes "jpg", "pdf", "tiff", etc.
@@ -87,7 +88,7 @@
 #'         n.lambda = 10,
 #'         K = 20,
 #'         psub = 0.5,
-#'         plot = FALSE,
+#'         figure = FALSE,
 #'         manhattan.type = c("c", "r")[1],
 #'         plot.name = "Test",
 #'         plot.type = "jpg",
@@ -213,6 +214,7 @@ sp.gwas <- function( genotype = NULL,
                      n.lambda = 10,
                      K = 100,
                      psub = 0.5,
+                     figure = FALSE,
                      manhattan.type = "c",
                      plot.name = "",
                      plot.type = "jpg",
@@ -303,7 +305,7 @@ sp.gwas <- function( genotype = NULL,
     }
     
     
-    if(plot){
+    if(figure){
         sp.manhattan( sp.df=sp.res$sp.df,
                       threshold=sp.res$threshold,
                       save.path=save.path,
@@ -311,6 +313,11 @@ sp.gwas <- function( genotype = NULL,
                       plot.ylim=plot.ylim,
                       plot.type=plot.type,
                       dpi=plot.dpi )
+        
+        manhattan.type <- NULL
+        plot.name <- NULL
+        plot.type <- NULL
+        plot.dpi <- NULL
     }
     
     
@@ -339,6 +346,7 @@ sp.gwas <- function( genotype = NULL,
             n.lambda = n.lambda,
             K = K,
             psub = psub,
+            figure = figure,
             manhattan.type = manhattan.type,
             plot.name = plot.name,
             plot.type = plot.type,

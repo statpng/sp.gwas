@@ -29,6 +29,7 @@ sp.gwas(
   n.lambda = 10,
   K = 100,
   psub = 0.5,
+  figure = FALSE,
   manhattan.type = "c",
   plot.name = "",
   plot.type = "jpg",
@@ -81,6 +82,8 @@ sp.gwas(
 \item{K}{The number of iterations in resampling when calculating the selection probabilities.}
 
 \item{psub}{The subsampling proportion. For efficiency, default is 0.5.}
+
+\item{figure}{figure will be plotted or not}
 
 \item{manhattan.type}{A type of manhattan plot to be drawn includes circular('c') and rectangular('m').}
 
@@ -146,7 +149,7 @@ sp.gwas(genotype = genotype,
         n.lambda = 10,
         K = 20,
         psub = 0.5,
-        plot = FALSE,
+        figure = FALSE,
         manhattan.type = c("c", "r")[1],
         plot.name = "Test",
         plot.type = "jpg",
