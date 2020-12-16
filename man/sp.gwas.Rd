@@ -5,95 +5,125 @@
 \title{Selection probabilities using generalized linear model with regularization for a SNP data in the hapmap format.}
 \usage{
 sp.gwas(
-  genotype = NULL,
-  phenotype = NULL,
+  input.genotype = NULL,
+  input.phenotype = NULL,
   input.type = c("object", "path"),
-  imputation = FALSE,
-  QC = TRUE,
-  callrate.range = c(0, 1),
-  maf.range = c(0, 1),
-  HWE.range = c(0, 1),
-  heterozygosity.range = c(0, 1),
-  remove.missingY = TRUE,
-  save.path = "./sp.folder",
-  y.col = 2,
-  y.id.col = 1,
-  normalization = TRUE,
-  method = "lasso",
-  family = "gaussian",
-  false.discovery = c(1, 5, 10),
-  permutation = FALSE,
-  nperm = 100,
-  plot.ylim = NULL,
-  lambda.min.quantile = 0.5,
-  n.lambda = 10,
-  K = 100,
-  psub = 0.5,
-  figure = FALSE,
-  manhattan.type = "c",
+  input.y.col = 2,
+  input.y.id.col = 1,
+  input.y.norm = TRUE,
+  impute = FALSE,
+  impute.type = c("distribution", "mode"),
+  qc = TRUE,
+  qc.callrate.range = c(0, 1),
+  qc.maf.range = c(0, 1),
+  qc.HWE.range = c(0, 1),
+  qc.hetero.range = c(0, 1),
+  qc.remove.missingY = TRUE,
+  pop = TRUE,
+  pop.tsne = FALSE,
+  pop.clustering = "kmeans",
+  pop.gap = "firstSEmax",
+  pop.gap.Kmax = NULL,
+  pop.gap.nboot = 50,
+  gwas.method = "lasso",
+  gwas.family = "gaussian",
+  gwas.alpha.seq = seq(0.1, 0.9, by = 0.2),
+  gwas.nlambda = 10,
+  gwas.lambda.min.quantile = 0.5,
+  gwas.nrep = 100,
+  gwas.psub = 0.5,
+  gwas.seed = NULL,
+  gwas.cpp = FALSE,
+  threshold.false.discovery = c(1, 5, 10),
+  threshold.perm = FALSE,
+  threshold.nperm = 100,
+  plot.display = FALSE,
+  plot.manhattan.type = "c",
   plot.name = "",
-  plot.type = "jpg",
-  plot.dpi = 300
+  plot.ylim = NULL,
+  plot.extension = "jpg",
+  plot.dpi = 300,
+  save.path = "./"
 )
 }
 \arguments{
-\item{genotype}{Either R object or file path can be considered. A genotype data is not a data.frame but a matrix with dimension \code{p} by \code{(n+11)}. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.}
+\item{input.genotype}{Either R object or file path can be considered. A genotype data is not a data.frame but a matrix with dimension \code{p} by \code{(n+11)}. It is formatted by hapmap which has (rs, allele, chr, pos) in the first four(1-4) columns, (strand, assembly, center, protLSID, assayLSID, panel, Qcode) in the following seven(5-11) columns. If NULL, user can choose a path in interactive use.}
 
-\item{phenotype}{Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.}
+\item{input.phenotype}{Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.}
 
 \item{input.type}{Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".}
 
-\item{imputation}{TRUE or FALSE for whether imputation will be conducted.}
+\item{input.y.col}{The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 2.}
 
-\item{QC}{TRUE or FALSE for whether QC for SNPs will be conducted.}
+\item{input.y.id.col}{The column of sample ID in the phenotype data file. Default is 1.}
 
-\item{callrate.range}{A numeric vector indicating the range of non-missing proportion. Default is c(0, 1).}
+\item{input.y.norm}{If TRUE. phenotypes are converted to be normal-shape using box-cox transformation when all phenotypes are positive.}
 
-\item{maf.range}{A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).}
+\item{impute}{TRUE or FALSE for whether imputation will be conducted.}
 
-\item{HWE.range}{A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).}
+\item{impute.type}{Two imputation methods are supported for (only) imputation=TRUE. Default is "distribution" which impute a genotype from allele distribution. The other is "mode" which indicates an imputation from the most frequent genotype.}
 
-\item{heterozygosity.range}{A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).}
+\item{qc}{TRUE or FALSE for whether QC for SNPs will be conducted.}
 
-\item{remove.missingY}{If TRUE, the samples with missing values in phenotype data are removed. Accordingly, the corresponding genotype samples are also filtered out. Default is TRUE.}
+\item{qc.callrate.range}{A numeric vector indicating the range of non-missing proportion. Default is c(0, 1).}
 
-\item{save.path}{A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. Note that if there is an output RData file in "save.path", sp.gwas will just load the output files(.RData) in there, thereby not providing the results for new "genotype" and "phenotype".}
+\item{qc.maf.range}{A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).}
 
-\item{y.col}{The columns of phenotypes. At most 4 phenotypes can be considered, because the plot of them will be fine. Default is 2.}
+\item{qc.HWE.range}{A numeric vector indicating the range of pvalue by Hardy-Weinberg Equillibrium to be used. Default is c(0, 1).}
 
-\item{y.id.col}{The column of sample ID in the phenotype data file. Default is 1.}
+\item{qc.hetero.range}{A numeric vector indicating the range of heterozygosity values to be used, because, in some cases, heterozygosity higher than expected indicates the low quality variants or sample contamination. Default is c(0, 1).}
 
-\item{normalization}{If TRUE. phenotypes are converted to be normal-shape using box-cox transformation when all phenotypes are positive.}
+\item{qc.remove.missingY}{If TRUE, the samples with missing values in phenotype data are removed. Accordingly, the corresponding genotype samples are also filtered out. Default is TRUE.}
 
-\item{method}{A method of penalized regression. It includes "lasso" for the lasso and "enet" for the elastic-net.}
+\item{pop}{Whether the population structure as a covariate into our model is incorporated or not. The estimation for subpopulation will be conducted using 'gap' statistic and the corresponding PCoA and tSNE plot will be provided.. Default is TRUE.}
 
-\item{family}{A family of response variable(phenotype). It is "gaussian" for continuous response variable, "binomial" for binary, "poisson" for count, etc. Now you can use only the same family for the multi phenotypes. For more details, see the function(\code{stats::glm}). Default is "gaussian".}
+\item{pop.tsne}{Whether the tSNE plot would be displayed or not. Defaults is FALSE.}
 
-\item{false.discovery}{The expected number of false discovery to be controlled. The larger it is, the higher threshold becomes. Default is c(1, 5, 10).}
+\item{pop.clustering}{The clustering method to classify the samples into subpopulations. Either "kmeans" or "pam" is available. Dafualt is "kmeans".}
 
-\item{permutation}{Permutation-based threshold values can be provided for \code{false.discovery} if permutation is TRUE. Default is FALSE.}
+\item{pop.gap}{The method of calculating the gap statistics. Default is "firstSEmax".}
 
-\item{nperm}{The number of permutation replicates. Note that the calculation time increases as \code{nperm} increases. Default is 100.}
+\item{pop.gap.Kmax}{The maximum number of clusters to be taken into account. Default is 10\% of the sample size.}
 
-\item{plot.ylim}{A range of the y-axis. If NULL, automatic range in the y-axis will be provided. For plot.ylim=c(0,1), the y-axis has a range of 0 and 1.}
+\item{pop.gap.nboot}{The number of bootstraps when calculating the gap statistics. Default is 50.}
 
-\item{lambda.min.quantile}{A range of lambda sequence. Default is 0.5 (median). If the range is so small that it can have many tied selection probabilities which is 1. To handle with this problem, you should increase the value of "lambda.min.quantile".}
+\item{gwas.method}{A method of penalized regression. It includes "lasso" for the lasso and "enet" for the elastic-net.}
 
-\item{n.lambda}{The length of lambda sequence. The larger n.lambda, the more detailed lambda sequence will be.}
+\item{gwas.family}{A family of response variable(phenotype). It is "gaussian" for continuous response variable, "binomial" for binary, "poisson" for count, etc. Now you can use only the same family for the multi phenotypes. For more details, see the function(\code{stats::glm}). Default is "gaussian".}
 
-\item{K}{The number of iterations in resampling when calculating the selection probabilities.}
+\item{gwas.alpha.seq}{A mixing proportion between lasso and ridge penalties. Default is from 0.1 to 0.9 by 0.2, i.e. elastic-net penalty. When you want to use the lasso penalty, set this value at 1.}
 
-\item{psub}{The subsampling proportion. For efficiency, default is 0.5.}
+\item{gwas.nlambda}{The length of lambda sequence. The larger n.lambda, the more detailed lambda sequence will be.}
 
-\item{figure}{figure will be plotted or not}
+\item{gwas.lambda.min.quantile}{A range of lambda sequence. Default is 0.5 (median). If the range is so small that it can have many tied selection probabilities which is 1. To handle with this problem, you should increase the value of "lambda.min.quantile".}
 
-\item{manhattan.type}{A type of manhattan plot to be drawn includes circular('c') and rectangular('m').}
+\item{gwas.nrep}{The number of iterations in resampling when calculating the selection probabilities.}
+
+\item{gwas.psub}{The subsampling proportion. For efficiency, default is 0.5.}
+
+\item{gwas.seed}{An integer value to reproduce the analysis result. Default is current date (e.g. 20201111).}
+
+\item{gwas.cpp}{Whether or not the code using Rcpp will be used.}
+
+\item{threshold.false.discovery}{The expected number of false discovery to be controlled. The larger it is, the higher threshold becomes. Default is c(1, 5, 10).}
+
+\item{threshold.perm}{Permutation-based empirical threshold can be provided for \code{false.discovery} if permutation is TRUE. Default is FALSE.}
+
+\item{threshold.nperm}{The number of permutation replicates. Note that the calculation time increases as \code{nperm} increases. Default is 100.}
+
+\item{plot.display}{Figures will be displayed or not}
+
+\item{plot.manhattan.type}{A type of manhattan plot to be drawn includes circular('c') and rectangular('m').}
 
 \item{plot.name}{A name of plot file.}
 
-\item{plot.type}{A type of plot file which includes "jpg", "pdf", "tiff", etc.}
+\item{plot.ylim}{A range of the y-axis. If NULL, automatic range in the y-axis will be provided. For plot.ylim=c(0,1), the y-axis has a range of 0 and 1.}
+
+\item{plot.extension}{A type of plot file which includes "jpg", "pdf", "tiff", etc.}
 
 \item{plot.dpi}{A resolution of plot. If you want to get a high-resolution image, plot.dpi should be large.}
+
+\item{save.path}{A save.path which has all output files. If there exists save.path, sp.gwas will check if there is an output file. Note that if there is an output RData file in "save.path", sp.gwas will just load the output files(.RData) in there, thereby not providing the results for new "genotype" and "phenotype".}
 }
 \value{
 \item{Histogram of original and transformed phenotypes}{Histogram of phenotypes with p-value by Shapiro-test on the top right corner.}
@@ -124,40 +154,60 @@ The penalty function of \code{elastic-net} is defined as \deqn{\alpha||\beta||_1
 8 : \code{return} \code{SP}=\eqn{(SP_1, \cdots, SP_p).} \cr
 }
 \examples{
+if(FALSE){
+
+# Note that you have to change the parameters used in this example when applying this code into your works.
 genotype <- sp.gwas::genotype # load("genotype.rda")
 phenotype <- sp.gwas::phenotype # load("phenotype.rda")
 
 # elastic-net model
-devAskNewPage(ask = FALSE)
-sp.gwas(genotype = genotype, 
-        phenotype = phenotype, 
-        input.type = c("object", "path")[1], 
-        QC = TRUE,
-        callrate.range = c(0.95, 1),
-        maf.range = c(1e-3, 1),
-        HWE.range = c(0, 1),
-        heterozygosity.range = c(0, 1),
-        remove.missingY = TRUE,
-        save.path = "./EXAMPLE_enet",
-        y.id.col = 1, 
-        y.col = 2:4, 
-        normalization = FALSE, 
-        method="enet",
-        family="gaussian",
-        false.discovery = c(1,5,10),
-        permutation=FALSE,
+sp.gwas(input.genotype = genotype,
+        input.phenotype = phenotype,
+        input.type = "object",
+        input.y.col = 2:3,
+        input.y.id.col = 1,
+        input.y.norm = FALSE, # due to the negative values of phenotypes
+
+        impute = TRUE,
+        impute.type = "distribution", # based on the allele frequency distribution
+
+        qc = TRUE,
+        qc.callrate.range = c(0.9, 1),
+        qc.maf.range = c(0.01, 1),
+        qc.HWE.range = c(0, 1),
+        qc.hetero.range = c(0, 1),
+        qc.remove.missingY = TRUE,
+
+        pop = TRUE,
+        pop.tsne = FALSE,
+        pop.clustering = "kmeans",
+        pop.gap = "firstSEmax",
+        pop.gap.Kmax = NULL,
+        pop.gap.nboot = 50,
+
+        gwas.method = "enet",
+        gwas.family = "gaussian",
+        gwas.alpha.seq = 0.1, # for a fixed alpha value
+        gwas.nlambda = 10,
+        gwas.lambda.min.quantile = 0.5,
+        gwas.nrep = 10, # the number of resampling replicates
+        gwas.psub = 0.5,
+        gwas.seed = NULL,
+        gwas.cpp = FALSE,
+
+        threshold.false.discovery = c(1,5,10),
+        threshold.perm = TRUE,
+        threshold.nperm = 10,
+
+        plot = FALSE,
+        plot.manhattan.type = "c",
+        plot.name = "",
         plot.ylim = NULL,
-        lambda.min.quantile = 0.5,
-        n.lambda = 10,
-        K = 20,
-        psub = 0.5,
-        figure = FALSE,
-        manhattan.type = c("c", "r")[1],
-        plot.name = "Test",
-        plot.type = "jpg",
-        plot.dpi = 300)
+        plot.extension = "jpg",
+        plot.dpi = 300,
 
-
+        save.path = "./EXAMPLE_enet")
+        
 # Manhattan plot for the first phenotype (Y1)
 results <- read.csv("./EXAMPLE_enet/[2]sp.results.csv")
 class(results$chr) <- "numeric"
@@ -179,65 +229,76 @@ qqman_manhattan(results,
 dev.off()
 
 
+# Lasso model with permuted threshold for multinomial phenotypes
 
-# Lasso model with permuted threshold
+genotype <- sp.gwas::genotype # load("genotype.rda")
+phenotype <- sp.gwas::phenotype # load("phenotype.rda")
 
-devAskNewPage(ask = FALSE)
-sp.gwas(genotype = genotype, 
-        phenotype = phenotype, 
-        input.type = c("object", "path")[1], 
-        maf.range = c(1e-3, 1),
-        HWE.range = c(0, 1),
-        heterozygosity.range = c(0, 1),
-        remove.missingY = TRUE,
-        save.path = "./EXAMPLE_lasso-perm",
-        y.id.col = 1, 
-        y.col = 2, 
-        normalization = FALSE, 
-        method="lasso",
-        family="gaussian",
-        false.discovery = c(1,5,10),
-        permutation=TRUE,
-        nperm=10,
-        plot.ylim = NULL,
-        lambda.min.quantile = 0.5,
-        n.lambda = 10,
-        K = 20,
-        psub = 0.5,
-        manhattan.type = c("c", "r")[1],
-        plot.name = "Test_perm",
-        plot.type = "jpg",
-        plot.dpi = 300)
+phenotype[,2] <- gtools::quantcut(phenotype[,2], 3)
+phenotype[,3] <- gtools::quantcut(phenotype[,3], 3)
+phenotype[,4] <- gtools::quantcut(phenotype[,4], 3)
+
+
+sp.gwas(input.genotype = genotype,
+        input.phenotype = phenotype,
+        input.type = "object",
+        input.y.col = 2:4,
+        input.y.id.col = 1,
+        input.y.norm = FALSE, # due to the negative values of phenotypes
         
-# Manhattan plot for the first phenotype (Y1) with permuted threshold
-results <- read.csv("./EXAMPLE_lasso-perm/[2]sp.results.csv")
-class(results$chr) <- "numeric"
-class(results$pos) <- "numeric"
-thresholds <- read.csv("./EXAMPLE_lasso-perm/[2]sp.thresholds.csv")
-threshold_theory_FD1 <- subset( subset(thresholds, Method=="Theoretical"), FD==1)$Y1
-threshold_perm_FD1 <- subset( subset(thresholds, Method=="Permuted"), FD==1)$Y1
-highlight_theory <- results$rs[results$Y1 > threshold_theory_FD1]
-highlight_perm <- results$rs[results$Y1 > threshold_perm_FD1]
-highlight_intersect <- intersect(highlight_theory, highlight_perm)
+        impute = TRUE,
+        impute.type = "distribution", # based on the allele frequency distribution
+        
+        qc = TRUE,
+        qc.callrate.range = c(0.9, 1),
+        qc.maf.range = c(0.01, 1),
+        qc.HWE.range = c(0, 1),
+        qc.hetero.range = c(0, 1),
+        qc.remove.missingY = TRUE,
+        
+        pop = TRUE,
+        pop.tsne = FALSE,
+        pop.clustering = "kmeans",
+        pop.gap = "firstSEmax",
+        pop.gap.Kmax = NULL,
+        pop.gap.nboot = 50,
+        
+        gwas.method = "lasso",
+        gwas.family = "multinomial",
+        gwas.alpha.seq = 1, # for a fixed alpha value
+        gwas.nlambda = 10,
+        gwas.lambda.min.quantile = 0.5,
+        gwas.nrep = 10, # the number of resampling replicates
+        gwas.psub = 0.5,
+        gwas.seed = NULL,
+        gwas.cpp = FALSE,
+        
+        threshold.false.discovery = c(1,5,10),
+        threshold.perm = TRUE,
+        threshold.nperm = 10,
+        
+        plot = FALSE,
+        plot.manhattan.type = "c",
+        plot.name = "",
+        plot.ylim = NULL,
+        plot.extension = "jpg",
+        plot.dpi = 300,
+        
+        save.path = "./EXAMPLE_lasso_multinomial")
 
-jpeg("./EXAMPLE_lasso-perm/Manhattan_from_qqman.jpeg", width=12, height=5, unit="in", res=600)
-qqman_manhattan(results,
-                chr="chr", bp="pos", snp="rs", p="Y1", logp=FALSE, 
-                suggestiveline = threshold_theory_FD1,
-                genomewideline = threshold_perm_FD1,
-                highlight = list(highlight_theory, highlight_perm, highlight_intersect),
-                col.highlight = c("blue", "red", "purple"),
-                ylab="Selection probabilities", ylim=c(0,1))
-dev.off()
 
+png.manhattan_from_dir("./EXAMPLE_lasso_multinomial", "Theoretical", FD=c(1,5,10))
+png.manhattan_from_dir("./EXAMPLE_lasso_multinomial", "Permuted", FD=c(1,5,10))
+
+
+
+}
 
 
 }
 \references{
 Zou, H., & Hastie, T. (2005). Regularization and variable selection via the elastic net. Journal of the royal statistical society: series B (statistical methodology), 67(2), 301-320.
-
 Meinshausen, N., & Bühlmann, P. (2010). Stability selection. Journal of the Royal Statistical Society: Series B (Statistical Methodology), 72(4), 417-473.
-
 Kim, K., Koo, J., & Sun, H. (2020). An empirical threshold of selection probability for analysis of high-dimensional correlated data. Journal of Statistical Computation and Simulation, 1-12.
 }
 \author{

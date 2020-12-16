@@ -1,13 +1,13 @@
 Package: sp.gwas
 Type: Package
-Title: Variable Selection Package Using Selection Probability for Genome-Wide Association Studies
-Version: 1.3.1
-Author: Kipoong Kim
+Title: An integrated tool for an analysis of high-dimensional genomic data in Genome-Wide Association Study
+Version: 1.6.0
+Author: Kipoong Kim and Hokeun Sun
 Maintainer: Kipoong Kim <kkp7700@gmail.com>
-Description: This package provides selection probability that can be used to prioritize variables for a given regularization model. For an analysis of high-dimensional genomic data, the regularization model can accommodate correlations between predictors rather than individual tests such as t-test and ANOVA. Moreover, the selection probability can prioritize the variables not depending on tuning parameter. This package provides output files of three types: (1) Matched data files (genotype, numerical, snp info, phenotype, QC results), (2) Selection result files (selection probabilities and empirical thresholds), (3) Manhattan plot.
+Description: For an analysis of high-dimensional genomic data, the regularization model can accommodate correlations between predictors as well as outperform the individual methods such as t-test and ANOVA. Moreover, the selection probability can prioritize genetic variants for a given regularization model not depending on tuning parameter. This package follows 4 steps: (1)data import, (2)preprocessing, (3)genomic selection, (4)visualization. Specifically, it provides output files of three types: Matched data files (genotype, numerical, snp info, phenotype, QC results), Selection result files (selection probabilities and empirical thresholds) and Manhattan plot.
 License: GPL-2 | GPL-3
-Depends: R (>= 3.6.0)
-Imports: ggplot2, compiler, glmnet, dplyr, CMplot, readxl, data.table, writexl, bestNormalize, gridExtra, tidyr, gtools, calibrate, genetics, pbapply, HardyWeinberg
+Depends: R (>= 4.0.0)
+Imports: ggplot2, compiler, glmnet, dplyr, CMplot, readxl, data.table, writexl, bestNormalize, gridExtra, tidyr, gtools, calibrate, genetics, pbapply, HardyWeinberg, tsne, cluster, stats, R.utils, gtools
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1

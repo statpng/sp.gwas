@@ -1,0 +1,160 @@
+---
+title: "An excercise with sp.gwas for an analysis of high-dimensional "
+author: "Kipoong Kim"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+
+
+
+## Workflow
+
+0. Data type
+  - Genotype data: Hapmap-format
+  - phenotype data: 
+    * Continuous, 
+    * Binary, 
+    * Multiclass (but each category should have at least 10~20 observations)
+1. Preprocessing
+  - Quality Control
+    * Minor Allele Frequency
+    * Hardy-Weinberg Equilibrium
+    * Heterozygosity
+    * Missing Call Rate
+  - Imputation
+2. Population Structure
+  - Gap statistic
+    * Estimating the number of subpopulations
+    * Cluster analysis
+  - fastSTRUCTURE (pending)
+  - PCoA
+3. Selection Procedure
+  - Selectino probaility with regularization
+    * Lasso
+    * Elastic-net
+    * Multiresponse elastic-net (pending)
+    * Unified elastic-net (pending)
+    * Unified elastic-net with df-normalization (pending)
+  - Empirical Threshold
+4. Output
+  - QC results
+  - Data files before/after QC steps
+  - Selection probabilities
+  - Empirical thresholds
+  - Visualization
+    * A plot for population assignment by fastSTRUCTURE (pending)
+    * LD plot (pending)
+    * Gap statistic plot (pending)
+    * PCoA plot (pending)
+    * tSNE plot (pending)
+    * Manhattan plot
+
+----
+
+## Example Data
+
+Load the genotype data with several phenotypes
+```{r}
+  genotype <- sp.gwas::genotype
+  phenotype <- sp.gwas::phenotype
+```
+
+
+## Data format
+
+Note that the first 11 columns of `genotype` are biological information of SNPs and the remaining columns are ID of each individual.
+```{r}
+head(colnames(genotype), 15)
+```
+
+Also, note that `genotype` has column names in its first row, and that `phenotype` has a column of `ID` in its first column matched by the ID in `genotype`.
+```{r}
+genotype[1:5, 1:15]
+head(phenotype)
+```
+
+Therefore, you can see that there are 1000 individuals and 100 SNPs in `genotype`, and that there are columns for `ID` and 3 continuous outcomes in `phenotype`.
+```{r}
+dim(genotype)
+dim(phenotype)
+```
+
+
+
+
+
+
+
+
+
+
+
+## Vignette Info
+
+
+
+
+
+
+## Vignette Info
+
+
+Vignettes are long form documentation commonly included in packages. Because they are part of the distribution of the package, they need to be as compact as possible. The `html_vignette` output type provides a custom style sheet (and tweaks some options) to ensure that the resulting html is as small as possible. The `html_vignette` format:
+
+- Never uses retina figures
+- Has a smaller default figure size
+- Uses a custom CSS stylesheet instead of the default Twitter Bootstrap style
+
+## Vignette Info
+
+Note the various macros within the `vignette` section of the metadata block above. These are required in order to instruct R how to build the vignette. Note that you should change the `title` field and the `\VignetteIndexEntry` to match the title of your vignette.
+
+## Styles
+
+The `html_vignette` template includes a basic CSS theme. To override this theme you can specify your own CSS in the document metadata as follows:
+
+    output: 
+      rmarkdown::html_vignette:
+        css: mystyles.css
+
+## Figures
+
+The figure sizes have been customised so that you can easily put two images side-by-side. 
+
+```{r, fig.show='hold'}
+plot(1:10)
+plot(10:1)
+```
+
+You can enable figure captions by `fig_caption: yes` in YAML:
+
+    output:
+      rmarkdown::html_vignette:
+        fig_caption: yes
+
+Then you can use the chunk option `fig.cap = "Your figure caption."` in **knitr**.
+
+## More Examples
+
+You can write math expressions, e.g. $Y = X\beta + \epsilon$, footnotes^[A footnote here.], and tables, e.g. using `knitr::kable()`.
+
+```{r, echo=FALSE, results='asis'}
+knitr::kable(head(mtcars, 10))
+```
+
+Also a quote using `>`:
+
+> "He who gives up [code] safety for [code] speed deserves neither."
+([via](https://twitter.com/hadleywickham/status/504368538874703872))

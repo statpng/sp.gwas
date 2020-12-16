@@ -15,6 +15,7 @@ import.hapmap(
   normalization = TRUE,
   remove.missingY = TRUE,
   imputation = FALSE,
+  impute.type = c("distribution", "mode"),
   QC = TRUE,
   callrate.range = c(0, 1),
   maf.range = c(0, 1),
@@ -42,6 +43,8 @@ import.hapmap(
 \item{remove.missingY}{If TRUE, the samples with missing values in phenotype data are removed. Accordingly, the corresponding genotype samples are also filtered out. Default is TRUE.}
 
 \item{imputation}{TRUE or FALSE for whether imputation will be conducted.}
+
+\item{impute.type}{Two imputation methods are supported for (only) imputation=TRUE. Default is "distribution" which impute a genotype from allele distribution. The other is "mode" which indicates an imputation from the most frequent genotype.}
 
 \item{QC}{TRUE or FALSE for whether QC for SNPs will be conducted.}
 
@@ -77,16 +80,24 @@ import.hapmap(genotype = genotype,
               phenotype = phenotype, 
               input.type = c("object", "path")[1], 
               imputation = FALSE, 
-              QC = TRUE,  # if TRUE, the following QC steps (callrate, maf, HWE, heterozygosity) are conducted.
+              
+              # if TRUE, the following QC steps (callrate, maf, HWE, heterozygosity) are conducted.
+              QC = TRUE,  
+              
               callrate.range = c(0.95, 1),
               maf.range = c(1e-3, 1),
               HWE.range = c(0, 1),
               heterozygosity.range = c(0, 1),
-              remove.missingY = TRUE,   # if TRUE, the samples with any missing phenotypes are filtered out in all data.
+              
+              # if TRUE, the samples with any missing phenotypes are filtered out in all data.
+              remove.missingY = TRUE,
+              
               save.path = "./EXAMPLE_obj",
               y.id.col = 1, 
               y.col = 2:4, 
-              normalization = FALSE, #if family is not "gaussian", i.e. not continuous variable, normalization should be FALSE
+              
+              #if family is not "gaussian", i.e. not continuous variable, normalization should be FALSE
+              normalization = FALSE,
               family="gaussian")
 
 

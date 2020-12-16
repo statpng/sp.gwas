@@ -8,3 +8,17 @@ example
 check
 sp.folder
 EXAMPLE
+sp_result
+Kunyan
+test_code.R
+EXAMPLE_2_path
+EXAMPLE_enet
+EXAMPLE_lasso-perm
+EXAMPLE_lasso_multinomial
+EXAMPLE
+
+src
+vignette
+
+lasso*
+enet*

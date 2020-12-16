@@ -1,0 +1,45 @@
+$genotype
+[1] "genotype"
+
+$phenotype
+[1] "phenotype"
+
+$input.type
+[1] "object" "path"  
+
+$save.path
+[1] "./SNPs=2684_RILs=157/enet/enet_seed=20201110__2020-11-10_155308"
+
+$y.col
+[1] 2 3
+
+$y.id.col
+[1] 1
+
+$normalization
+[1] TRUE
+
+$remove.missingY
+[1] TRUE
+
+$imputation
+[1] TRUE
+
+$impute.type
+[1] "distribution" "mode"        
+
+$QC
+[1] TRUE
+
+$callrate.range
+[1] 0 1
+
+$maf.range
+[1] 0 1
+
+$HWE.range
+[1] 0 1
+
+$heterozygosity.range
+[1] 0 1
+

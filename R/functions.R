@@ -4,6 +4,18 @@ SetFolder <- function(FolderName){
 }
 
 
+png.venn2 = function(x,y,duplicated=FALSE){
+  inner = intersect(x,y)
+  xnyc = x[!x%in%inner]
+  ynxc = y[!y%in%inner]
+  if(!duplicated){
+    inner = unique(inner)
+    xnyc = unique(xnyc)
+    ynxc = unique(ynxc)
+  }
+  list( x = xnyc , y = ynxc , inner = inner )
+}
+
 
 mat.order <- function(mat, row=TRUE, col=TRUE){
   if( row ){
@@ -19,6 +31,48 @@ mat.order <- function(mat, row=TRUE, col=TRUE){
   }
   return( mat[row.order, col.order] )
 }
+
+
+
+
+png.save.figure <- function(expr, file="./Figure/figure.jpeg", print=T, save=T, ...){
+  
+  extension <- strsplit( file, "\\." )[[1]] %>% .[length(.)]
+  if(save){
+    switch(extension,
+           png = {
+             png(file, ...)
+             eval(parse(text=expr))
+             dev.off()
+           },
+           jpeg = {
+             jpeg(file, ...)
+             eval(parse(text=expr))
+             dev.off()
+           },
+           pdf = {
+             pdf(file, ...)
+             eval(parse(text=expr))
+             dev.off()
+           },
+           eps = {
+             setEPS()
+             postscript(file, ...)
+             # postscript("./Figure/Manhattan.eps", width=10, height=5)
+             eval(parse(text=expr))
+             dev.off()
+           },
+           
+           {stop("filetype not recognized")}
+    )
+  }
+  
+  #print?
+  if (print) eval(parse(text=expr))
+  invisible(NULL)
+  
+}	
+
 
 
 

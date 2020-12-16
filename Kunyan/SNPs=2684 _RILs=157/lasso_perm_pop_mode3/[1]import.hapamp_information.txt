@@ -1,0 +1,45 @@
+$genotype
+[1] "genotype"
+
+$phenotype
+[1] "phenotype"
+
+$input.type
+[1] "object" "path"  
+
+$save.path
+[1] "./Kunyan/SNPs=2684 _RILs=157/lasso_perm_pop_mode3"
+
+$y.col
+[1] 2 3
+
+$y.id.col
+[1] 1
+
+$normalization
+[1] FALSE
+
+$remove.missingY
+[1] TRUE
+
+$imputation
+[1] TRUE
+
+$impute.type
+[1] "distribution" "mode"        
+
+$QC
+[1] TRUE
+
+$callrate.range
+[1] 0 1
+
+$maf.range
+[1] 0 1
+
+$HWE.range
+[1] 0 1
+
+$heterozygosity.range
+[1] 0 1
+

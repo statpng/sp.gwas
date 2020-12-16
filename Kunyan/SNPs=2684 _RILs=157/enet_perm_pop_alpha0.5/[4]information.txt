@@ -1,0 +1,79 @@
+$genotype
+[1] "genotype"
+
+$phenotype
+[1] "phenotype"
+
+$save.path
+[1] "./Kunyan/SNPs=2684 _RILs=157/enet_perm_pop_alpha0.5"
+
+$y.col
+[1] 2 3
+
+$y.id.col
+[1] 1
+
+$normalization
+[1] TRUE
+
+$QC
+[1] TRUE
+
+$maf.range
+[1] 0 1
+
+$HWE.range
+[1] 0 1
+
+$heterozygosity.range
+[1] 0 1
+
+$remove.missingY
+[1] TRUE
+
+$method
+[1] "enet"
+
+$family
+[1] "multinomial"
+
+$false.discovery
+ [1]  1  2  3  4  5  6  7  8  9 10 11 12
+[13] 13 14 15 16 17 18 19 20
+
+$permutation
+[1] TRUE
+
+$nperm
+[1] 100
+
+$plot.ylim
+NULL
+
+$lambda.min.quantile
+[1] 0.5
+
+$n.lambda
+[1] 20
+
+$K
+[1] 100
+
+$psub
+[1] 0.8
+
+$figure
+[1] FALSE
+
+$manhattan.type
+[1] "c"
+
+$plot.name
+[1] "Test"
+
+$plot.type
+[1] "jpg"
+
+$plot.dpi
+[1] 300
+

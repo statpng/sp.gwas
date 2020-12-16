@@ -48,3 +48,7 @@ EXAMPLE_perm/
 EXAMPLE_obj/
 EXAMPLE_obj_imputation/
 EXAMPLE_tmp/
+EXAMPLE
+EXAMPLE_lasso_multinomial
+EXAMPLE_enet
+test_code.R

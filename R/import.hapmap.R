@@ -8,6 +8,7 @@
 #' @param phenotype Either R object or file path can be considered. A phenotype data is an \code{n} by \code{p} matrix. Since the first some columns can display attributes of the phenotypes, you should enter the arguments, y.col and y.id.col, which represent the columns of phenotypes to be analyzed and the column of sample ID. If NULL, user can choose a path in interactive use.
 #' @param input.type Default is "object". If \code{input.type} is "object", obejects of genotype/phenotype will be entered, and if "path", paths of genotype/phenotype will be enterd. If you want to use an object, you have to make sure that the class of each column of genotype data is equal to "character".
 #' @param imputation TRUE or FALSE for whether imputation will be conducted.
+#' @param impute.type Two imputation methods are supported for (only) imputation=TRUE. Default is "distribution" which impute a genotype from allele distribution. The other is "mode" which indicates an imputation from the most frequent genotype. 
 #' @param QC TRUE or FALSE for whether QC for SNPs will be conducted.
 #' @param callrate.range A numeric vector indicating the range of non-missing proportion. Default is c(0, 1).
 #' @param maf.range A numeric vector indicating the range of minor allele frequency (MAF) to be used. Default is c(0, 1).
@@ -38,16 +39,24 @@
 #'               phenotype = phenotype, 
 #'               input.type = c("object", "path")[1], 
 #'               imputation = FALSE, 
-#'               QC = TRUE,  # if TRUE, the following QC steps (callrate, maf, HWE, heterozygosity) are conducted.
+#'               
+#'               # if TRUE, the following QC steps (callrate, maf, HWE, heterozygosity) are conducted.
+#'               QC = TRUE,  
+#'               
 #'               callrate.range = c(0.95, 1),
 #'               maf.range = c(1e-3, 1),
 #'               HWE.range = c(0, 1),
 #'               heterozygosity.range = c(0, 1),
-#'               remove.missingY = TRUE,   # if TRUE, the samples with any missing phenotypes are filtered out in all data.
+#'               
+#'               # if TRUE, the samples with any missing phenotypes are filtered out in all data.
+#'               remove.missingY = TRUE,
+#'               
 #'               save.path = "./EXAMPLE_obj",
 #'               y.id.col = 1, 
 #'               y.col = 2:4, 
-#'               normalization = FALSE, #if family is not "gaussian", i.e. not continuous variable, normalization should be FALSE
+#'               
+#'               #if family is not "gaussian", i.e. not continuous variable, normalization should be FALSE
+#'               normalization = FALSE,
 #'               family="gaussian")
 #'
 #'
@@ -97,6 +106,7 @@ import.hapmap <-
            normalization = TRUE,
            remove.missingY = TRUE,
            imputation = FALSE,
+           impute.type = c("distribution", "mode"),
            QC = TRUE, 
            callrate.range = c(0, 1),
            maf.range = c(0, 1),
@@ -249,187 +259,188 @@ import.hapmap <-
     
     
     if(QC){
-    
-    # Quality Control ---------------------------------------------------------
-    png.maf <- function(genotype.hapmap, sep=""){
       
-      # xx: vecor with c(GG, GC, CC, CC, CC)
-      # This function will return 1e-22 for the SNP with no minor allele
-      
-      
-      get.maf <- function(xj){
-        xj <- as.character(xj)
+      # Quality Control ---------------------------------------------------------
+      png.maf <- function(genotype.hapmap, sep=""){
         
-        if(length(unique(xj))<=1) maf <- 0
+        # xx: vecor with c(GG, GC, CC, CC, CC)
+        # This function will return 1e-22 for the SNP with no minor allele
         
-        xj <- ifelse(xj %in% NonGenotype, NA, xj)
-        x.na <- xj[is.na(xj)]
-        x.value <- xj[!is.na(xj)]
         
-        if(length(x.value)>1){
-          tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
-          maf <- min( prop.table(tb) )
-        } else {
-          maf <- 0
+        get.maf <- function(xj){
+          xj <- as.character(xj)
+          
+          if(length(unique(xj))<=1) maf <- 0
+          
+          xj <- ifelse(xj %in% NonGenotype, NA, xj)
+          x.na <- xj[is.na(xj)]
+          x.value <- xj[!is.na(xj)]
+          
+          if(length(x.value)>1){
+            tb <- table( unlist( unlist( strsplit( x.value, sep ) ) ) )
+            maf <- min( prop.table(tb) )
+          } else {
+            maf <- 0
+          }
+          
+          ifelse( maf>0.5, 1-maf, maf )
         }
         
-        ifelse( maf>0.5, 1-maf, maf )
-      }
-      
-      out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.maf(xj) )
-
-      out
-    }
-    
-    
-    
-    
-    
-    png.HWE <- function(genotype.hapmap){
-      
-      get.HWE <- function(xj){
-        xj <- as.character(xj)
-        xjNA <- replace(xj, list = (xj %in% NonGenotype ), NA)
-        if( length(table(xjNA)) == 1 ) return("NA")
-        input <- strsplit(xjNA,"")
-        if( all(is.na(unlist(input))) ) return("NA")
+        out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.maf(xj) )
         
-        input.genotype <- genotype( sapply( input, paste0, collapse="/") )
-        if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
-          out <- HWE.exact(input.genotype)$p.value
-        } else {
-          out <- "NA"
-        }
         out
       }
       
-      png.get_allele.mat <- function(genotype.hapmap){
-        allele.mat <- 
-          genotype.hapmap[-1,-(1:11)] %>% 
-          apply(1, function(xj) {
-            allels.vec <- unlist( strsplit(names(table(ifelse(xj %in% NonGenotype, NA, xj))), "") ) %>% unique
-            alleles <- allels.vec %>% paste0(collapse="/") 
-            if( length(allels.vec) == 1 ){
-              alleles <- paste0(c(alleles,"X"), collapse="/")
-            }
-            alleles
-            # if( length(alleles) == 1 ){
-            #   expand.grid(unlist(strsplit(alleles, "/")), unlist(strsplit(alleles, "/"))) %>% 
-            #     apply(1, function(x) paste0(sort(x),collapse="")) %>% unique
-            # }
+      
+      
+      
+      
+      png.HWE <- function(genotype.hapmap){
+        
+        get.HWE <- function(xj){
+          xj <- as.character(xj)
+          xjNA <- replace(xj, list = (xj %in% NonGenotype ), NA)
+          if( length(table(xjNA)) == 1 ) return("NA")
+          input <- strsplit(xjNA,"")
+          if( all(is.na(unlist(input))) ) return("NA")
+          
+          input.genotype <- genotype( sapply( input, paste0, collapse="/") )
+          if(length(table(input.genotype))>1 & length(levels(input.genotype))<6){
+            out <- HWE.exact(input.genotype)$p.value
+          } else {
+            out <- "NA"
+          }
+          out
+        }
+        
+        png.get_allele.mat <- function(genotype.hapmap){
+          allele.mat <- 
+            genotype.hapmap[-1,-(1:11)] %>% 
+            apply(1, function(xj) {
+              allels.vec <- unlist( strsplit(names(table(ifelse(xj %in% NonGenotype, NA, xj))), "") ) %>% unique
+              alleles <- allels.vec %>% paste0(collapse="/") 
+              if( length(allels.vec) == 1 ){
+                alleles <- paste0(c(alleles,"X"), collapse="/")
+              }
+              alleles
+              # if( length(alleles) == 1 ){
+              #   expand.grid(unlist(strsplit(alleles, "/")), unlist(strsplit(alleles, "/"))) %>% 
+              #     apply(1, function(x) paste0(sort(x),collapse="")) %>% unique
+              # }
             })
-        allele.mat
-      }
-      
-      
-      png.get_allele <- function(xj){
-        allels.vec <- unlist( strsplit(names(table(ifelse(xj %in% NonGenotype, NA, xj))), "") ) %>% unique
-        alleles <- allels.vec %>% paste0(collapse="/") 
-        if( length(allels.vec) == 1 ){
-          alleles <- paste0(c(alleles,"X"), collapse="/")
+          allele.mat
         }
-        alleles
-      }
-      
-      # system.time({
-      #   hwe.mat <- genotype.hapmap
-      #   allele.vec <- png.get_allele.mat(hwe.mat)
-      #   genotype.x.na.mat <- pbapply(hwe.mat[-1,-(1:11)], 2, function(xj) ifelse(xj %in% c("NN", "00", "--", "//", "++", "XX"), NA, xj) %>% unlist )
-      #   out <- MakeCounts(t(genotype.x.na.mat), allele.vec)[,1:3] %>% HWExactMat(verbose=F) %>% .$pvalvec
-      # })
-
-      out <- pbapply(genotype.hapmap[-1,-(1:11)], 1, function(xj) {
-        xj.na <- ifelse(xj %in% NonGenotype, NA, xj) %>% unlist
-        if( all(is.na(xj.na)) | length(unique(xj.na))==1 ) return(0)
-        suppressWarnings( MakeCounts(xj.na, png.get_allele(xj.na))[1:3] %>% HWExact(verbose=F) %>% .$pval %>% as.numeric )
-      })
-      
-      # out <- pbapply( genotype.hapmap[-1,][,-(1:11)][1:20,], 1, function(xj) get.HWE(xj) )
-      
-      out
-    }
-    
-    
-    
-    
-    
-    png.heterozygousCalls <- function(genotype.hapmap){
-      
-      get.heterozygousCalls <- function(xj){
-        set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
-        xj <- as.character(xj)
-        xjna <- unlist( replace( xj, xj %in% NonGenotype, NA ) )
-        if( all(is.na(xjna)) ) return("NA")
-        out <- mean( xjna %in% set.heterozygote )
+        
+        
+        png.get_allele <- function(xj){
+          allels.vec <- unlist( strsplit(names(table(ifelse(xj %in% NonGenotype, NA, xj))), "") ) %>% unique
+          alleles <- allels.vec %>% paste0(collapse="/") 
+          if( length(allels.vec) == 1 ){
+            alleles <- paste0(c(alleles,"X"), collapse="/")
+          }
+          alleles
+        }
+        
+        # system.time({
+        #   hwe.mat <- genotype.hapmap
+        #   allele.vec <- png.get_allele.mat(hwe.mat)
+        #   genotype.x.na.mat <- pbapply(hwe.mat[-1,-(1:11)], 2, function(xj) ifelse(xj %in% c("NN", "00", "--", "//", "++", "XX"), NA, xj) %>% unlist )
+        #   out <- MakeCounts(t(genotype.x.na.mat), allele.vec)[,1:3] %>% HWExactMat(verbose=F) %>% .$pvalvec
+        # })
+        
+        out <- pbapply(genotype.hapmap[-1,-(1:11)], 1, function(xj) {
+          xj.na <- ifelse(xj %in% NonGenotype, NA, xj) %>% unlist
+          if( all(is.na(xj.na)) | length(unique(xj.na))==1 ) return(0)
+          suppressWarnings( MakeCounts(xj.na, png.get_allele(xj.na))[1:3] %>% HWExact(verbose=F) %>% .$pval %>% as.numeric )
+        })
+        
+        # out <- pbapply( genotype.hapmap[-1,][,-(1:11)][1:20,], 1, function(xj) get.HWE(xj) )
+        
         out
       }
       
-      out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.heterozygousCalls(xj) )
       
-      out
-    }
-    
-    
-    print("Removing the SNPs with missing genotype in all samples")
-    wh.allmissing <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
-      all( unique(xj) %in% NonGenotype )
-    } )
-    cat( "# of SNPs with all missing =", sum( wh.allmissing ), "\n" )
-    
-    # myX.init <- myX.init[c(1, which(!wh.allmissing)+1),]
-    print("Removing the SNPs with only one value")
-    wh.onevalue <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
-      ( length(unique(xj)) == 1 )
-    } )
-    cat( "# of SNPs with only one genotype =", sum( wh.onevalue ), "\n" )
-    
-    if( sum( wh.onevalue ) > 0 ){
-      cat("Example of SNPs with only one value:", "\n")
-      head( myX.init[-1,-(1:11)][which(wh.onevalue),] %>% {cbind(.[,1:10], "_"=".", "_"=".", "_"=".", .[,(ncol(.)-10+1):ncol(.)])} )
-    }
-    
-    # myX.init <- myX.init[c(1, which(!wh.onevalue)+1),]
-    print("Calculating call rate (the % of samples with a non-missing genotype")
-    CallRate <- myX.init[-1,-(1:11)] %>% pbapply(1, function(xj){
-      xjna <- unlist( replace( xj, xj %in% NonGenotype, NA ) )
-      (length(xjna)-sum(is.na(xjna)))/length(xjna)
-    })
-    print("Calculating MAF")
-    MAF <- png.maf( myX.init )
-    print("Calculating pvalue by HWE")
-    pvalue.HWE <- png.HWE( myX.init )
-    print("Calculating heterozygosity")
-    heterozygosity <- png.heterozygousCalls(myX.init)
-    
-    filter.allmissing <- which( !wh.allmissing )
-    filter.onevalue <- which( !wh.onevalue )
-    filter.CallRate <- which( CallRate <= max(callrate.range) & CallRate >= min(callrate.range) )
-    filter.MAF <- which( MAF <= max(maf.range) & MAF >= min(maf.range) )
-    filter.HWE <- which( sapply(pvalue.HWE, function(xx) min(xx, 1)) <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
-    filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
-    
-    filter.intersect <- intersect( intersect( intersect(filter.CallRate, filter.MAF), filter.HWE), filter.heterozygosity)
-    
-    # CallRate.final <- CallRate[filter.intersect]
-    # MAF.final <- MAF[filter.intersect]
-    # pvalue.HWE.final <- pvalue.HWE[filter.intersect]
-    # heterozygosity.final <- heterozygosity[filter.intersect]
-    
-    
-    
-    write.csv(x=cbind.data.frame(myX.init[-1,1:4], 
-                                 CallRate=CallRate,
-                                 MAF=MAF,
-                                 pvalue_HWE=pvalue.HWE,
-                                 heterozygosity=heterozygosity), 
-              file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
-    
-    
+      
+      
+      
+      png.heterozygousCalls <- function(genotype.hapmap){
+        
+        get.heterozygousCalls <- function(xj){
+          set.heterozygote <- apply( subset( expand.grid(c("T","C","A","G"), c("T","C","A","G")), Var1 != Var2 ), 1, paste0, collapse="")
+          xj <- as.character(xj)
+          xjna <- unlist( replace( xj, xj %in% NonGenotype, NA ) )
+          if( all(is.na(xjna)) ) return("NA")
+          out <- mean( xjna %in% set.heterozygote )
+          out
+        }
+        
+        out <- pbapply( genotype.hapmap[-1,][,-(1:11)], 1, function(xj) get.heterozygousCalls(xj) )
+        
+        out
+      }
+      
+      
+      print("Removing the SNPs with missing genotype in all samples")
+      wh.allmissing <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
+        all( unique(xj) %in% NonGenotype )
+      } )
+      cat( "# of SNPs with all missing =", sum( wh.allmissing ), "\n" )
+      
+      # myX.init <- myX.init[c(1, which(!wh.allmissing)+1),]
+      print("Removing the SNPs with only one value")
+      wh.onevalue <- pbapply( myX.init[-1,-(1:11)], 1, function(xj){
+        ( length(unique(xj)) == 1 )
+      } )
+      cat( "# of SNPs with only one genotype =", sum( wh.onevalue ), "\n" )
+      
+      if( sum( wh.onevalue ) > 0 ){
+        cat("Example of SNPs with only one value:", "\n")
+        head( myX.init[-1,-(1:11)][which(wh.onevalue),] %>% {cbind(.[,1:10], "_"=".", "_"=".", "_"=".", .[,(ncol(.)-10+1):ncol(.)])} )
+      }
+      
+      # myX.init <- myX.init[c(1, which(!wh.onevalue)+1),]
+      print("Calculating call rate (the % of samples with a non-missing genotype")
+      CallRate <- myX.init[-1,-(1:11)] %>% pbapply(1, function(xj){
+        xjna <- unlist( replace( xj, xj %in% NonGenotype, NA ) )
+        (length(xjna)-sum(is.na(xjna)))/length(xjna)
+      })
+      print("Calculating MAF")
+      MAF <- png.maf( myX.init )
+      print("Calculating pvalue by HWE")
+      pvalue.HWE <- png.HWE( myX.init )
+      print("Calculating heterozygosity")
+      heterozygosity <- png.heterozygousCalls(myX.init)
+      
+      filter.allmissing <- which( !wh.allmissing )
+      filter.onevalue <- which( !wh.onevalue )
+      filter.CallRate <- which( CallRate <= max(callrate.range) & CallRate >= min(callrate.range) )
+      filter.MAF <- which( MAF <= max(maf.range) & MAF >= min(maf.range) )
+      filter.HWE <- which( sapply(pvalue.HWE, function(xx) min(xx, 1)) <= max(HWE.range) & pvalue.HWE >= min(HWE.range) )
+      filter.heterozygosity <- which( heterozygosity <= max(heterozygosity.range) & heterozygosity >= min(heterozygosity.range) )
+      
+      filter.intersect <- intersect( intersect( intersect(filter.CallRate, filter.MAF), filter.HWE), filter.heterozygosity)
+      
+      # CallRate.final <- CallRate[filter.intersect]
+      # MAF.final <- MAF[filter.intersect]
+      # pvalue.HWE.final <- pvalue.HWE[filter.intersect]
+      # heterozygosity.final <- heterozygosity[filter.intersect]
+      
+      
+      
+      write.csv(x=cbind.data.frame(myX.init[-1,1:4], 
+                                   CallRate=CallRate,
+                                   MAF=MAF,
+                                   pvalue_HWE=pvalue.HWE,
+                                   heterozygosity=heterozygosity), 
+                file=paste0(save.path,"/[1]myQC.csv"), row.names=FALSE, fileEncoding = "UTF-8")
+      
+      
     }
     
     
     
     # myX.init <- myX.init[c(1, filter.intersect+1), ]
+    
     
     
     # Numericalize the coding of genotypes ------------------------------------
@@ -439,8 +450,8 @@ import.hapmap <-
     print("Checking the numericalization function")
     tab_genotype_num <- 
       pbapply::pblapply( 1:floor(nrow(myGD.init)*0.01), function(jj){
-      Xjj <- as.character(myX.init[-1,-(1:11)][jj,])
-      Xjj <- ifelse( Xjj %in% NonGenotype, NA, Xjj )
+        Xjj <- as.character(myX.init[-1,-(1:11)][jj,])
+        Xjj <- ifelse( Xjj %in% NonGenotype, NA, Xjj )
       tab <- table(Geno=Xjj, Num=myGD.init[,jj] )
       tab_dimnames <- dimnames(tab)
       diag_rev <- (row(tab) + col(tab)) == (nrow(tab) + 1)
@@ -476,7 +487,7 @@ import.hapmap <-
     write.csv(x=data.frame(ID=myX.init[-1,1], missing.snp, stringsAsFactors = FALSE), file=paste0(save.path,"/[0]missing.snp.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     write.csv(x=data.frame(ID=as.character(myX.init[1,-(1:11)]), missing.sample, stringsAsFactors = FALSE), file=paste0(save.path,"/[0]missing.sample.csv"), row.names=FALSE, fileEncoding = "UTF-8")
     
-    # Saving Excel But its time is too long ----------------------------------
+    # Saving Excel But it takes long time ----------------------------------
     # for( Excelobj in list(myX, myGD, myGM, myGT) ){
     #     write.xlsx(x = Excelobj,
     #                file = paste0("Data.GAPIT.",".xlsx"),
@@ -513,8 +524,11 @@ import.hapmap <-
       if( normalization ){
         print("Performing the normalization for phenotypes, but there is no evidence that they can be normalized.")
         
+        if( min( myY.original[,-1] ) <= 0 ){
+          stop("To perform the boxcox transformation, the phenotype value must be positive. \nSet the normalization to be FALSE.")
+        }
         for( j in 1:(ncol(myY)-1) ){
-          myY[,j+1] <- boxcox(myY.original[,j+1], standardize = FALSE)$x.t
+          myY[,j+1] <- bestNormalize::boxcox(myY.original[,j+1], standardize = FALSE)$x.t
         }
       } else {
         myY <- myY.original
@@ -589,7 +603,7 @@ import.hapmap <-
       set.seed(2020)
       myX.impute[-1,-(1:11)] <- 
         pbapply::pbapply(myX[-1,-(1:11)], 1, function(xj){
-          as.character(unlist(xj)) %>% png.impute.snp(., NonGenotype)
+          as.character(unlist(xj)) %>% png.impute.snp(., impute.type=impute.type, NonGenotype)
         }) %>% t
       
       print("Checking the difference between before and after imputation.")
@@ -742,6 +756,7 @@ import.hapmap <-
         normalization = normalization,
         remove.missingY = remove.missingY,
         imputation = imputation,
+        impute.type = impute.type,
         QC = QC,
         callrate.range = callrate.range,
         maf.range = maf.range,

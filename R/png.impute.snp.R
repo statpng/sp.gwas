@@ -1,4 +1,4 @@
-png.impute.snp <- function(xx, NonGenotype=NULL){
+png.impute.snp <- function(xx, impute.type=c("distribution", "mode"), NonGenotype=NULL){
   # xx <- c("NN", "NA", "AA", "AT", "AA", "AA", "AA")
   # xx <- c("NN", "AA", "AA", "AA", "AA", "AA", "AA")
   # xx <- c("AA", "AA", "AA", "AA", "AA", "AA", "AA")
@@ -6,7 +6,7 @@ png.impute.snp <- function(xx, NonGenotype=NULL){
   # xx <- c("AT", "AT", "AT", "TA", "TA", "AT", "NN")
   # xx <- c("AA", "TT", "AA", "TT", "TT", "TT", "NN")
   # xx <- c("AA", "TT", "AA", "TT", "TT", "GG", "NN")
-  if( is.null(NonGenotype) ) NonGenotype <- c("-", "_2", "NN", "00", "--", "//", "++", "XX")
+  if( is.null(NonGenotype) ) NonGenotype <- c("-", "_2", "NN", "NA", "00", "--", "//", "++", "XX")
   
   if( any( class(xx) %in% c("data.frame", "list") ) ) xx <- as.character(unlist(xx))
   xx <- ifelse(xx %in% NonGenotype, NA, xx)
@@ -45,16 +45,20 @@ png.impute.snp <- function(xx, NonGenotype=NULL){
   ord.tb <- order( sapply( strsplit( names(tb), "" ), function(x) sum(x==minor.allele) ) )
   tb.new <- tb[ord.tb]
   
-  y <- sum( tb.new[2] + 2*tb.new[3] )
-  n <- 2*sum(tb.new)
-  # maf <- (tb[2]+2*tb[3])/(2*sum(tb))
-  # pi(p) ~ beta(0.5, 0.5)
-  # L(y|p) ~ B(p)
-  # pi(p|y) \prop pi(p) * L(y|p)
-  #         ~ Beta(y+0.5, n+0.5-y)
-  maf <- rbeta(n=length(x.na), shape1=y+0.5, n+0.5-y )
-  # curve(dbeta(x, shape1=y+2, n+2-y ))
-  impute.value <- rbinom(n=length(x.na), size = 2, prob = maf)
-  xx[is.na(xx)] <- names(tb.new)[ impute.value+1 ]
+  if( impute.type == "distribution" ){
+    y <- sum( tb.new[2] + 2*tb.new[3] )
+    n <- 2*sum(tb.new)
+    # maf <- (tb[2]+2*tb[3])/(2*sum(tb))
+    # pi(p) ~ beta(0.5, 0.5)
+    # L(y|p) ~ B(p)
+    # pi(p|y) \prop pi(p) * L(y|p)
+    #         ~ Beta(y+0.5, n+0.5-y)
+    maf <- rbeta(n=length(x.na), shape1=y+0.5, n+0.5-y )
+    # curve(dbeta(x, shape1=y+2, n+2-y ))
+    impute.value <- rbinom(n=length(x.na), size = 2, prob = maf)
+    xx[is.na(xx)] <- names(tb.new)[ impute.value+1 ]
+  } else if (impute.type == "mode"){
+    xx[is.na(xx)] <- names(tb.new)[ which.max(tb.new) ]
+  }
   xx
 }
